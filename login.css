@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Chewy&family=Fredoka:wght@300..700&family=Raleway:ital,wght@0,100..900;1,100..900&family=Uncial+Antiqua&display=swap');
+
+body {
+    margin: 0;
+    font-family: Roboto, system-ui, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #ECF0F1;
+    padding: 0;
+}
+
+/*Header - univ*/
+#univ-header {
+    width: 100%;
+    display: flex;
+    background-color: #12181e;
+    color: white;
+    align-items: center;
+    padding: 15px 0;
+    margin: 0 0 70px 0;
+}
+
+#univ-logo {
+    margin-right: 15px;
+    padding: 10px 0 0 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    font-size: 50px;
+}
+
+#univ-name {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 0;
+}
+
+#univ-header a {
+    text-decoration: none;
+}
+
+/*Login*/
+#login-div {
+    background-color: #ffffff;
+    padding: 20px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 40%;
+    max-width: 400px;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#login-div h2 {
+    font-size: 30px;
+    color: #2C3E50;
+}
+
+.login-container form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    color: #2C3E50;
+}
+
+.login-container button {
+    font-size: 16px;
+    margin-top: 10px;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background-color:#3498D8;
+    color: #FFFFFF;
+    cursor: pointer;
+}
+
+.login-container button:hover { background-color: #0055aa; }
+.login-container p {
+    font-size: 14px;
+    text-align: center;
+}
+.child-login {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0;
+}
+
+.child-login input {
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 4px;
+}
+
+.child-login label, span { font-size: 14px;}
+
+.login-container a {
+    color: #0055aa;
+    text-decoration: none;
+}
