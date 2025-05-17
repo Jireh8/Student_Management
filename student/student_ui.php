@@ -184,12 +184,14 @@
                                             <td>" . htmlspecialchars($grade['subject_code']) . "</td>
                                             <td>" . htmlspecialchars($grade['subject_name']) . "</td>
                                             <td>" . htmlspecialchars($grade['units']) . "</td>
-                                            <td>" . htmlspecialchars($grade['final_grade']) . "</td>
+                                            <td>" . ($grade['final_grade'] == 0 ? '' : htmlspecialchars($grade['final_grade'])) . "</td>
                                             <td>" . htmlspecialchars($grade['scholastic_status']) . "</td>
                                         </tr>";
-                                    // calculate GWA
-                                    $totalUnits += $grade['units'];
-                                    $weightedSum += $grade['units'] * $grade['final_grade'];
+                                    // calculate GWA only if grade is not 0
+                                    if ($grade['final_grade'] != 0) {
+                                        $totalUnits += $grade['units'];
+                                        $weightedSum += $grade['units'] * $grade['final_grade'];
+                                    }
                                 }
                                 
                                 // calculate gwa and display
@@ -419,7 +421,7 @@
         });
 
         // default page
-        showPage('student-grades');
+        showPage('student-schedule');
     </script>
 </body>
 </html>
