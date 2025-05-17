@@ -17,6 +17,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="faculty_profile.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         :root {
             --primary-color: #12181e;
@@ -89,7 +91,7 @@
         }
 
         .welcome-section {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: var(--primary-color); /* Solid color */
             color: var(--white);
             padding: 20px;
             border-radius: 10px;
@@ -167,6 +169,11 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#calendar" type="button" role="tab">Calendar</button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="faculty-profile-tab" data-bs-toggle="tab" data-bs-target="#faculty-profile" type="button" role="tab">
+                    <span class="material-icons"></span> Profile
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content" id="dashboardTabsContent">
@@ -199,7 +206,7 @@
 
                         while($row = $result->fetch_assoc()) {
                             echo '<div class="col-md-4 mb-4">
-                                    <div class="card section-card" onclick="showSectionStudents(' . $row['section_id'] . ')">
+                                    <div class="card section-card" onclick="showSectionStudents(' . $row['section_id'] . ', \'' . htmlspecialchars($row['semesters']) . '\')">
                                         <div class="card-body">
                                             <h5 class="card-title">
                                                 <i class="fas fa-users me-2"></i>' . htmlspecialchars($row['section_id'] . $row['section_name']) . '
@@ -209,6 +216,9 @@
                                             </p>
                                             <p class="card-text mb-1">
                                                 <i class="fas fa-book me-2"></i>' . htmlspecialchars($row['subject_names']) . '
+                                            </p>
+                                            <p class="card-text mb-1">
+                                                <i class="fas fa-calendar-alt me-2"></i>Semester: ' . htmlspecialchars($row['semesters']) . '
                                             </p>
                                             <p class="card-text mb-1">
                                                 <i class="fas fa-user-graduate me-2"></i>' . $row['student_count'] . ' Students
@@ -230,10 +240,7 @@
                         <div class="d-flex align-items-center">
                             <span id="currentSchoolYear" class="me-2 fw-bold"></span>
                             <label class="me-2 mb-0">Semester:</label>
-                            <select id="semesterFilter" class="form-select form-select-sm me-3" style="width: auto;">
-                                <option value="1st">1st</option>
-                                <option value="2nd">2nd</option>
-                            </select>
+                            <span id="currentSemester" class="fw-bold me-4"></span>
                             <button class="btn btn-primary" onclick="showSectionsGrid()">
                                 <i class="fas fa-arrow-left me-2"></i>Back to Sections
                             </button>
@@ -250,13 +257,14 @@
                                     <th onclick="sortTable('student_name')" style="cursor:pointer;">Name <span id="sort_student_name"></span></th>
                                     <th onclick="sortTable('program_name')" style="cursor:pointer;">Program <span id="sort_program_name"></span></th>
                                     <th onclick="sortTable('year_level')" style="cursor:pointer;">Year Level <span id="sort_year_level"></span></th>
-                                    <th>Semester</th>
-                                    <th onclick="sortTable('gwa')" style="cursor:pointer;">GWA <span id="sort_gwa"></span></th>
+                                    <th>Subject</th>
+                                    <th>Grade</th>
+                                    <th>Status</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody id="students-list">
-                                <!-- Students will be loaded here -->
+                                <!-- Students and grades will be loaded here -->
                             </tbody>
                         </table>
                     </div>
@@ -267,23 +275,29 @@
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="modalTitle">Add Student GWA</h5>
+                                <h5 class="modal-title" id="modalTitle">Add/Update Grade</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
                                 <form id="updateGradeForm" action="update_grades.php" method="POST">
                                     <input type="hidden" name="student_id" id="updateStudentId">
+                                    <input type="hidden" name="subject_id" id="updateSubjectId">
                                     <input type="hidden" name="action" id="actionType">
                                     <input type="hidden" name="semester" id="updateSemester">
+                                    <input type="hidden" name="school_year" id="updateSchoolYear">
                                     <div class="mb-3">
                                         <label class="form-label">Student Name</label>
                                         <input type="text" class="form-control" id="updateStudentName" readonly>
                                     </div>
                                     <div class="mb-3">
+                                        <label class="form-label">Subject</label>
+                                        <input type="text" class="form-control" id="updateSubjectName" readonly>
+                                    </div>
+                                    <div class="mb-3">
                                         <label class="form-label">Grade</label>
                                         <input type="number" class="form-control" name="grade" id="updateGrade" min="0" max="100" step="0.01" required>
                                     </div>
-                                    <button type="submit" class="btn btn-primary" id="submitButton">Add GWA</button>
+                                    <button type="submit" class="btn btn-primary" id="submitButton">Save Grade</button>
                                 </form>
                             </div>
                         </div>
@@ -481,10 +495,8 @@
                                                 if (!$hasClass) {
                                                     echo '<div class="p-1 bg-light bg-opacity-10 text-center"><small class="text-muted">-</small></div>';
                                                 }
-                                            
                                                 echo '</td>';
                                             }
-                                        
                                             echo '</tr>';
                                         }
                                     ?>
@@ -497,33 +509,100 @@
 
 
             <!-- Calendar Tab -->
-
             <div class="tab-pane fade" id="calendar" role="tabpanel">
-            <div class="table-container">
-                <h4>Academic Calendar</h4>
-                <p>Embed a calendar or show important academic dates/events.</p>
-                <!-- You could use a calendar plugin or static content -->
-                <!-- BEGIN: Calendar Inserted Here -->
-            <div class="mb-3">
-            <label for="calendarYear">Year:</label>
-            <select id="calendarYear" class="form-select" style="width: auto; display: inline-block;">
-                <!-- Populated by JavaScript -->
-            </select>
+                <div class="table-container">
+                    <h4>Academic Calendar</h4>
+                    <p>Embed a calendar or show important academic dates/events.</p>
+                    <!-- You could use a calendar plugin or static content -->
+                    <!-- BEGIN: Calendar Inserted Here -->
+                <div class="mb-3">
+                <label for="calendarYear">Year:</label>
+                <select id="calendarYear" class="form-select" style="width: auto; display: inline-block;">
+                    <!-- Populated by JavaScript -->
+                </select>
 
-            <label for="calendarMonth" class="ms-3">Month:</label> <select id="calendarMonth" class="form-select" style="width: auto; display: inline-block;"> <!-- Populated by JavaScript --> </select>
+                <label for="calendarMonth" class="ms-3">Month:</label> <select id="calendarMonth" class="form-select" style="width: auto; display: inline-block;"> <!-- Populated by JavaScript --> </select>
 
+                </div>
+
+                <table class="table table-bordered text-center" id="calendarTable">
+                    <thead class="table-dark">
+                        <tr>
+                        <th>Sun</th><th>Mon</th><th>Tue</th><Wed><th>Thu</th><Fri><th>Sat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+
+            
+                    </div>
+                </div>
             </div>
 
-            <table class="table table-bordered text-center" id="calendarTable">
-            <thead class="table-dark">
-                <tr>
-                <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Populated by JavaScript -->
-            </tbody>
-            </table>
+            <!-- Faculty Profile Tab -->
+            <div class="tab-pane fade" id="faculty-profile" role="tabpanel">
+                <div id="faculty-profile" class="student-page">
+                    <h2>Faculty Profile</h2>
+                    <div id="student-gen-info">
+                        <section id="user-profile">
+                            <span class="material-icons" id="user-profile-icon">account_circle</span>
+                            <label for="profile-upload" class="upload-btn">Change Profile</label>
+                            <input type="file" id="profile-upload" accept="image/*">
+                        </section>
+                        <section id="info-table">
+                            <table>
+                                <tbody>
+                                    <?php
+                                    // Fetch faculty info from instructor and contact_information tables
+                                    $stmt_fac = $conn->prepare("
+                                        SELECT 
+                                            i.instructor_id,
+                                            i.instructor_name,
+                                            i.department_id,
+                                            c.address,
+                                            c.phone_number,
+                                            c.email
+                                        FROM instructor i
+                                        INNER JOIN contact_information c ON i.contact_id = c.contact_id
+                                        WHERE i.instructor_id = ?
+                                    ");
+                                    $stmt_fac->bind_param("i", $_SESSION['instructor_id']);
+                                    $stmt_fac->execute();
+                                    $faculty = $stmt_fac->get_result()->fetch_assoc();
+
+                                    // Optionally fetch department name if you want to display it
+                                    $department_name = '';
+                                    if ($faculty && isset($faculty['department_id'])) {
+                                        $dept_stmt = $conn->prepare("SELECT department_name FROM department WHERE department_id = ?");
+                                        $dept_stmt->bind_param("i", $faculty['department_id']);
+                                        $dept_stmt->execute();
+                                        $dept_result = $dept_stmt->get_result()->fetch_assoc();
+                                        $department_name = $dept_result ? $dept_result['department_name'] : '';
+                                    }
+                                    ?>
+                                    <tr>
+                                        <td class="firstcol">Faculty Name</td>
+                                        <td class="secondcol"><?= htmlspecialchars($faculty['instructor_name']) ?></td>
+                                        <td class="thirdcol">Faculty ID</td>
+                                        <td class="fourthcol"><?= htmlspecialchars($faculty['instructor_id']) ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="firstcol">Department</td>
+                                        <td class="secondcol"><?= htmlspecialchars($department_name) ?></td>
+                                        <td class="thirdcol">Email Address</td>
+                                        <td class="fourthcol"><?= htmlspecialchars($faculty['email']) ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="firstcol">Phone Number</td>
+                                        <td class="secondcol"><?= htmlspecialchars($faculty['phone_number']) ?></td>
+                                        <td class="thirdcol">Address</td>
+                                        <td class="fourthcol"><?= htmlspecialchars($faculty['address']) ?></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </section>
 
             <script>
             const monthSelect = document.getElementById('calendarMonth');
@@ -588,12 +667,6 @@
 
             <!-- END: Calendar Inserted Here -->
 
-
-            
-
-
-
-
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- SweetAlert2 -->
@@ -623,25 +696,26 @@
         }
 
         let currentSectionId = null;
+        let currentSemester = null;
         let studentsData = [];
         let currentSort = { key: 'year_level', asc: true };
 
-        function showSectionStudents(sectionId) {
+        function showSectionStudents(sectionId, semester) {
             currentSectionId = sectionId;
+            currentSemester = semester;
             document.getElementById('sections-grid').style.display = 'none';
             document.getElementById('students-table').style.display = 'block';
             document.getElementById('currentSchoolYear').textContent = getCurrentSchoolYear();
+            document.getElementById('currentSemester').textContent = semester;
             fetchAndDisplayStudents();
-            document.getElementById('semesterFilter').onchange = fetchAndDisplayStudents;
             document.getElementById('studentSearch').oninput = filterAndRenderStudents;
         }
 
         function fetchAndDisplayStudents() {
             const studentsList = document.getElementById('students-list');
             studentsList.innerHTML = '<tr><td colspan="7" class="text-center">Loading students...</td></tr>';
-            const semester = document.getElementById('semesterFilter').value;
             const schoolYear = getCurrentSchoolYear();
-            fetch(`get_section_students.php?section_id=${currentSectionId}&semester=${semester}&school_year=${schoolYear}`)
+            fetch(`get_section_students.php?section_id=${currentSectionId}&semester=${currentSemester}&school_year=${schoolYear}`)
                 .then(response => {
                     if (!response.ok) {
                         return response.json().then(err => { throw new Error(err.error || 'Failed to fetch students'); });
@@ -654,6 +728,7 @@
                     sectionTitle.innerHTML = `<i class=\"fas fa-users me-2\"></i>${data.section_name}`;
                     sectionMeta.innerHTML = `${data.program_name} &bull; ${data.student_count} students`;
                     studentsData = data.students || [];
+                    console.log('Fetched studentsData:', studentsData); // Debug log
                     filterAndRenderStudents();
                 })
                 .catch(error => {
@@ -696,7 +771,7 @@
         }
 
         function updateSortIcons() {
-            ['student_id','student_name','program_name','year_level','gwa'].forEach(key => {
+            ['student_id','student_name','program_name','year_level'].forEach(key => {
                 document.getElementById('sort_' + key).textContent = '';
             });
             const icon = currentSort.asc ? '▲' : '▼';
@@ -708,15 +783,53 @@
         function renderStudents(students) {
             const studentsList = document.getElementById('students-list');
             studentsList.innerHTML = '';
+            console.log('Students data:', students); // Debug log
+
             if (students.length === 0) {
                 studentsList.innerHTML = '<tr><td colspan="7" class="text-center">No students found in this section</td></tr>';
                 return;
             }
+            let anyRow = false;
             students.forEach(student => {
-                const row = document.createElement('tr');
-                row.innerHTML = generateTableRow(student);
-                studentsList.appendChild(row);
+                if (!student.subjects || student.subjects.length === 0) {
+                    // Show student with no subjects
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${student.student_id}</td>
+                        <td>${student.student_name}</td>
+                        <td>${student.program_name}</td>
+                        <td>${student.year_level}</td>
+                        <td colspan="4" class="text-center text-muted">No subjects assigned for this year/semester</td>
+                    `;
+                    studentsList.appendChild(row);
+                    anyRow = true;
+                } else {
+                    student.subjects.forEach(subject => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${student.student_id}</td>
+                            <td>${student.student_name}</td>
+                            <td>${student.program_name}</td>
+                            <td>${student.year_level}</td>
+                            <td>${subject.subject_code} - ${subject.subject_name}</td>
+                            <td>${subject.final_grade !== null ? subject.final_grade : 0}</td>
+                            <td>${subject.scholastic_status || 'Regular'}</td>
+                            <td>
+                                <button class="btn btn-sm ${subject.final_grade == 0 ? 'btn-success' : 'btn-warning'}"
+                                    onclick="showUpdateGradeModal(${student.student_id}, '${student.student_name}', ${subject.subject_id}, '${subject.subject_name}', ${subject.final_grade})">
+                                    <i class="fas ${subject.final_grade == 0 ? 'fa-plus' : 'fa-edit'}"></i>
+                                    ${subject.final_grade == 0 ? 'Add' : 'Update'} Grade
+                                </button>
+                            </td>
+                        `;
+                        studentsList.appendChild(row);
+                        anyRow = true;
+                    });
+                }
             });
+            if (!anyRow) {
+                studentsList.innerHTML = '<tr><td colspan="7" class="text-center">No students with subjects found in this section</td></tr>';
+            }
         }
 
         function showSectionsGrid() {
@@ -724,30 +837,20 @@
             document.getElementById('students-table').style.display = 'none';
         }
 
-        function showUpdateGradeModal(studentId, studentName, currentGWA, action) {
+        function showUpdateGradeModal(studentId, studentName, subjectId, subjectName, grade) {
             document.getElementById('updateStudentId').value = studentId;
             document.getElementById('updateStudentName').value = studentName;
-            document.getElementById('actionType').value = action;
-            document.getElementById('updateSemester').value = document.getElementById('semesterFilter').value;
-            const modalElement = document.getElementById('updateGradeModal');
-            const modal = new bootstrap.Modal(modalElement);
-            const submitButton = document.getElementById('submitButton');
-            const modalTitle = document.getElementById('modalTitle');
-            if (action === 'add') {
-                modalTitle.textContent = 'Add Student GWA';
-                document.getElementById('updateGrade').value = '';
-                submitButton.textContent = 'Add GWA';
-                submitButton.className = 'btn btn-success';
-            } else if (action === 'update') {
-                modalTitle.textContent = 'Update Student GWA';
-                document.getElementById('updateGrade').value = currentGWA || '';
-                submitButton.textContent = 'Update GWA';
-                submitButton.className = 'btn btn-warning';
-            }
+            document.getElementById('updateSubjectId').value = subjectId;
+            document.getElementById('updateSubjectName').value = subjectName;
+            document.getElementById('updateSemester').value = currentSemester;
+            document.getElementById('updateSchoolYear').value = getCurrentSchoolYear();
+            document.getElementById('updateGrade').value = grade && grade != 0 ? grade : '';
+            document.getElementById('actionType').value = grade == 0 ? 'add' : 'update';
+            const modal = new bootstrap.Modal(document.getElementById('updateGradeModal'));
             modal.show();
         }
 
-        // SweetAlert2 AJAX form submission for GWA
+        // SweetAlert2 AJAX form submission for grade
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('updateGradeForm');
             if (form) {
@@ -760,11 +863,11 @@
                     })
                     .then(response => response.text())
                     .then(data => {
-                        if (data.includes('success=gwa_updated')) {
+                        if (data.includes('success=grade_updated')) {
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Success',
-                                text: 'GWA updated successfully!'
+                                text: 'Grade updated successfully!'
                             }).then(() => {
                                 // Close modal and refresh students
                                 bootstrap.Modal.getInstance(document.getElementById('updateGradeModal')).hide();
@@ -774,7 +877,7 @@
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error',
-                                text: 'Failed to update GWA.'
+                                text: 'Failed to update grade.'
                             });
                         }
                     })
@@ -782,38 +885,13 @@
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
-                            text: 'Failed to update GWA.'
+                            text: 'Failed to update grade.'
                         });
                     });
                 };
             }
         });
-
-        // Update the table row generation to include add and update actions
-        function generateTableRow(student) {
-            return `                <tr>
-                    <td>${student.student_id}</td>
-                    <td>${student.student_name}</td>
-                    <td>${student.program_name}</td>
-                    <td>${student.year_level}</td>
-                    <td>${student.semester}</td>
-                    <td>${student.gwa || '-'}</td>
-                    <td>
-                        ${!student.gwa ? 
-                            `<button class="btn btn-sm btn-success" 
-                                    onclick="showUpdateGradeModal(${student.student_id}, '${student.student_name}', null, 'add')">
-                                <i class="fas fa-plus"></i> Add GWA
-                            </button>` : 
-                            `<button class="btn btn-sm btn-warning" 
-                                    onclick="showUpdateGradeModal(${student.student_id}, '${student.student_name}', ${student.gwa}, 'update')">
-                                <i class="fas fa-edit"></i> Update GWA
-                            </button>`
-                        }
-                    </td>
-                </tr>
-            `;
-        }
     </script>
 </body>
-</html> 
+</html>
 

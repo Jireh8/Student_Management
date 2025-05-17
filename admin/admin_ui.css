@@ -418,20 +418,42 @@
             font-size: 15px;
         }
 
-    .toast {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 12px 24px;
-        border-radius: 4px;
-        color: white;
-        z-index: 1000;
-        animation: fadeIn 0.3s;
-    }
-    .toast.success { background: #4CAF50; }
-    .toast.error { background: #F44336; }
+    /* Empty state styling */
+.no-students-row td {
+    padding: 40px 0 !important;
+    text-align: center;
+    background-color: #f9f9f9 !important;
+}
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.empty-state .material-icons {
+    font-size: 60px;
+    color: #ccc;
+    margin-bottom: 15px;
+}
+
+.empty-state h3 {
+    color: #666;
+    margin: 0 0 10px 0;
+    font-size: 18px;
+}
+
+.empty-state p {
+    color: #888;
+    margin: 0 0 20px 0;
+    font-size: 14px;
+}
+
+#add-first-student {
+    width: auto;
+    padding: 10px 25px;
+}

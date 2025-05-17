@@ -99,7 +99,16 @@
                                 echo "</tr>";
                             }
                         } else {
-                            echo "<tr><td colspan='8'>No students found.</td></tr>";
+                            echo '<tr class="no-students-row">';
+                                echo '<td colspan="8">';
+                                    echo '<div class="empty-state">';
+                                        echo '<span class="material-icons">school</span>';
+                                        echo '<h3>No Students Found</h3>';
+                                        echo '<p>There are currently no students in the database.</p>';
+                                        echo '<button id="add-first-student" class="btn-style">Add First Student</button>';
+                                    echo '</div>';
+                                echo '</td>';
+                            echo '</tr>';
                         }
                     ?>
                 </tbody>
@@ -139,11 +148,19 @@
                         <label for="birthdate">Birthdate*</label>
                         <input type="date" id="birthdate" name="birthdate" required>
                     </div>
-                    <div class="form-style" style="grid-row:5;grid-column:1">
+                    <div class="form-style" style ="grid-row:5;grid-column:1">
+                        <label for="sex">Sex*</label>
+                        <select id="sex" name="sex" required>
+                            <option value="">Select Sex</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                    <div class="form-style" style="grid-row:6;grid-column:1">
                         <label for="address">Address*</label>
                         <input type="text" id="address" name="address" required>
                     </div>
-                    <div class="form-style" style="grid-row:6;grid-column:1">
+                    <div class="form-style" style="grid-row:7;grid-column:1">
                         <label for="phone_number">Phone Number*</label>
                         <input type="text" id="phone_number" name="phone_number" required>
                     </div>
@@ -229,11 +246,19 @@
                         <label for="edit-birthdate">Birthdate*</label>
                         <input type="date" id="edit-birthdate" name="birthdate" required>
                     </div>
-                    <div class="form-style" style="grid-row:5;grid-column:1">
+                    <div class="form-style" style ="grid-row:5;grid-column:1">
+                        <label for="sex">Sex*</label>
+                        <select id="edit-sex" name="sex" required>
+                            <option value="">Select Sex</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                    <div class="form-style" style="grid-row:6;grid-column:1">
                         <label for="edit-address">Address*</label>
                         <input type="text" id="edit-address" name="address" required>
                     </div>
-                    <div class="form-style" style="grid-row:6;grid-column:1">
+                    <div class="form-style" style="grid-row:7;grid-column:1">
                         <label for="edit-phone_number">Phone Number*</label>
                         <input type="text" id="edit-phone_number" name="phone_number" required>
                     </div>
@@ -341,16 +366,8 @@
                 });
 
         //student management
-        async function refreshStudentTable() {
-            try {
-                const response = await fetch('get_students.php');
-                const html = await response.text();
-                document.querySelector('#student-management table tbody').innerHTML = html;
-            } catch (error) {
-                console.error('Failed to refresh table:', error);
-            }
-        }
         // add student button
+        
             const addStudentBtn = document.getElementById('add-student');
             const addStudentModal = document.getElementById('add-student-modal');
             const closeAddStudent = document.getElementById('close-add-student');
@@ -368,6 +385,11 @@
                     addStudentModal.style.display = 'none';
                 }
             });
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.id === 'add-first-student') {
+                document.getElementById('add-student-modal').style.display = 'block';
+            }
+        });
         document.getElementById('add-student-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -391,7 +413,7 @@
                     alert(result);
                     form.reset();
                     document.getElementById('add-student-modal').style.display = 'none';
-                    refreshStudentTable();
+                    location.reload(); // Refresh the page
                 } else {
                     throw new Error(result || 'Failed to add student');
                 }
@@ -421,78 +443,233 @@
                     deleteStudentModal.style.display = 'none';
                 }
             });
-        // edit student modal - updated to populate form with student data
-        document.querySelectorAll('.btn-edit').forEach(button => {
-            button.addEventListener('click', function() {
-                const row = this.closest('tr');
+        // Edit student modal - updated to work properly
+        document.addEventListener('click', function(e) {
+            if (e.target && (e.target.classList.contains('btn-edit'))) {
+                const row = e.target.closest('tr');
                 const studentId = row.cells[0].textContent;
+                console.log(`Fetching student info for ID: ${studentId}`);
                 
                 // Show loading state
                 const modal = document.getElementById('edit-student-modal');
                 modal.style.display = 'block';
-                modal.querySelector('.modal-content').innerHTML = '<p>Loading student data...</p>';
+                modal.querySelector('.modal-content').innerHTML = '<div style="padding:20px;text-align:center;">Loading student data...</div>';
                 
-                // Fetch student data via AJAX
-                fetch(`get_student.php?student_id=${studentId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if(data.success) {
-                            // Restore the modal content
-                            modal.querySelector('.modal-content').innerHTML = `
-                                <span class="close" id="close-edit-student">&times;</span>
-                                <h2>Edit Student</h2>
-                                <form id="edit-student-form" action="student_mngmnt.php" method="POST">
-                                    <input type="hidden" name="action" value="edit">
-                                    <input type="hidden" id="edit-student-id" name="student_id" value="${data.student_id}">
-                                    <input type="hidden" id="edit-contact-id" name="contact_id" value="${data.contact_id}">
-                                    <!-- Rest of your form fields populated with data -->
-                                    <div class="form-style">
-                                        <label for="edit-lastname" style="grid-row:1;grid-column:1">Last Name*</label>
-                                        <input type="text" id="edit-lastname" name="lastname" value="${data.lastname}" required>
-                                    </div>
-                                    <!-- Include all other form fields similarly -->
-                                </form>
-                            `;
-                            
-                            // Reattach close event
-                            document.getElementById('close-edit-student').addEventListener('click', () => {
-                                modal.style.display = 'none';
-                            });
-                        } else {
-                            modal.querySelector('.modal-content').innerHTML = `
-                                <span class="close" id="close-edit-student">&times;</span>
-                                <h2>Error</h2>
-                                <p>${data.message || 'Failed to load student data'}</p>
-                            `;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        modal.querySelector('.modal-content').innerHTML = `
-                            <span class="close" id="close-edit-student">&times;</span>
-                            <h2>Error</h2>
-                            <p>Failed to load student data. Please try again.</p>
-                        `;
-                    });
-            });
-        });
-        // edit student close
-        const closeEditStudent = document.getElementById('close-edit-student');
-        closeEditStudent.addEventListener('click', () => {
-            document.getElementById('edit-student-modal').style.display = 'none';
-        });
-
-        window.addEventListener('click', (event) => {
-            if (event.target == document.getElementById('edit-student-modal')) {
-                document.getElementById('edit-student-modal').style.display = 'none';
+                // Fetch student data
+                fetchStudentData(studentId);
             }
         });
 
+        // Function to fetch student data
+        function fetchStudentData(studentId) {
+            fetch(`get_student.php?student_id=${studentId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        populateEditForm(data.data);
+                    } else {
+                        alert(data.message);
+                        closeModal('edit-student-modal');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error fetching student data: ' + error.message);
+                    closeModal('edit-student-modal');
+                });
+        }
+
+        // Function to generate program options
+        function generateProgramOptions(selectedId) {
+            //get program options from the DOM 
+            const options = [];
+            const programSelect = document.getElementById('program_id');
+            if (programSelect) {
+                Array.from(programSelect.options).forEach(option => {
+                    if (option.value) {
+                        const selected = parseInt(option.value) === parseInt(selectedId) ? 'selected' : '';
+                        options.push(`<option value="${option.value}" ${selected}>${option.text}</option>`);
+                    }
+                });
+            }
+            return options.join('');
+        }
+
+        // Function to generate section options
+        function generateSectionOptions(selectedId) {
+            // We'll get section options from the DOM since they're already available
+            const options = [];
+            const sectionSelect = document.getElementById('section_id');
+            if (sectionSelect) {
+                Array.from(sectionSelect.options).forEach(option => {
+                    if (option.value) {
+                        const selected = parseInt(option.value) === parseInt(selectedId) ? 'selected' : '';
+                        options.push(`<option value="${option.value}" ${selected}>${option.text}</option>`);
+                    }
+                });
+            }
+            return options.join('');
+        }
+
+        // Function to populate edit form with all fields
+        function populateEditForm(studentData) {
+            const modal = document.getElementById('edit-student-modal');
+            
+            // Create form HTML with all fields
+            modal.querySelector('.modal-content').innerHTML = `
+                <span class="close" id="close-edit-student">&times;</span>
+                <h2>Edit Student</h2>
+                <form id="edit-student-form">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" id="edit-student-id" name="student_id" value="${studentData.student_id}">
+                    <input type="hidden" id="edit-contact-id" name="contact_id" value="${studentData.contact_id}">
+                    
+                    <div class="form-style" style="grid-row:1;grid-column:1">
+                        <label for="edit-lastname">Last Name*</label>
+                        <input type="text" id="edit-lastname" name="lastname" value="${studentData.lastname}" required>
+                    </div>
+                    
+                    <div class="form-style" style="grid-row:2;grid-column:1">
+                        <label for="edit-firstname">First Name*</label>
+                        <input type="text" id="edit-firstname" name="firstname" value="${studentData.firstname}" required>
+                    </div>
+                    
+                    <div class="form-style" style="grid-row:3;grid-column:1">
+                        <label for="edit-middle_name">Middle Name</label>
+                        <input type="text" id="edit-middle_name" name="middle_name" value="${studentData.middle_name || ''}">
+                    </div>
+                    
+                    <div class="form-style" style="grid-row:4;grid-column:1">
+                        <label for="edit-birthdate">Birthdate*</label>
+                        <input type="date" id="edit-birthdate" name="birthdate" value="${studentData.birthdate}" required>
+                    </div>
+                    
+                    <div class="form-style" style="grid-row:5;grid-column:1">
+                        <label for="edit-sex">Sex*</label>
+                        <select id="edit-sex" name="sex" required>
+                            <option value="">Select Sex</option>
+                            <option value="Male" ${studentData.sex === 'Male' ? 'selected' : ''}>Male</option>
+                            <option value="Female" ${studentData.sex === 'Female' ? 'selected' : ''}>Female</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-style" style="grid-row:6;grid-column:1">
+                        <label for="edit-address">Address*</label>
+                        <input type="text" id="edit-address" name="address" value="${studentData.address}" required>
+                    </div>
+                    
+                    <div class="form-style" style="grid-row:7;grid-column:1">
+                        <label for="edit-phone_number">Phone Number*</label>
+                        <input type="text" id="edit-phone_number" name="phone_number" value="${studentData.phone_number}" required>
+                    </div>
+                    
+                    <div class="form-style" style="grid-row:1;grid-column:2">
+                        <label for="edit-email">Email*</label>
+                        <input type="email" id="edit-email" name="email" value="${studentData.email}" required>
+                    </div>
+                    
+                    <div class="form-style" style="grid-row:2;grid-column:2">
+                        <label for="edit-password">Password (leave blank to keep current)</label>
+                        <input type="password" id="edit-password" name="password">
+                    </div>
+                    
+                    <div class="form-style" style="grid-row:3;grid-column:2">
+                        <label for="edit-program_id">Program*</label>
+                        <select id="edit-program_id" name="program_id" required>
+                            <option value="">Select Program</option>
+                            ${generateProgramOptions(studentData.program_id)}
+                        </select>
+                    </div>
+                    
+                    <div class="form-style" style="grid-row:4;grid-column:2">
+                        <label for="edit-section_id">Section*</label>
+                        <select id="edit-section_id" name="section_id" required>
+                            <option value="">Select Section</option>
+                            ${generateSectionOptions(studentData.section_id)}
+                        </select>
+                    </div>
+                    
+                    <div class="form-style" style="grid-row:5;grid-column:2">
+                        <label for="edit-year_level">Year Level*</label>
+                        <select id="edit-year_level" name="year_level" required>
+                            <option value="">Select Year</option>
+                            <option value="1" ${studentData.year_level == 1 ? 'selected' : ''}>1st Year</option>
+                            <option value="2" ${studentData.year_level == 2 ? 'selected' : ''}>2nd Year</option>
+                            <option value="3" ${studentData.year_level == 3 ? 'selected' : ''}>3rd Year</option>
+                            <option value="4" ${studentData.year_level == 4 ? 'selected' : ''}>4th Year</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-style" style="grid-row:6;grid-column:2">
+                        <label for="edit-current_semester">Semester*</label>
+                        <select id="edit-current_semester" name="current_semester" required>
+                            <option value="">Select Semester</option>
+                            <option value="1st" ${studentData.current_semester === '1st' ? 'selected' : ''}>1st Semester</option>
+                            <option value="2nd" ${studentData.current_semester === '2nd' ? 'selected' : ''}>2nd Semester</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-style">Save Changes</button>
+                        <button type="button" class="btn-style" id="cancel-edit">Cancel</button>
+                    </div>
+                </form>
+            `;
+            
+            // Set up close button
+            document.getElementById('close-edit-student').addEventListener('click', () => {
+                closeModal('edit-student-modal');
+            });
+            
+            // Set up cancel button
+            document.getElementById('cancel-edit').addEventListener('click', () => {
+                closeModal('edit-student-modal');
+            });
+            
+            // Set up form submission
+            document.getElementById('edit-student-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitEditForm(this);
+            });
+        }
+
+        // Function to submit edit form
+        function submitEditForm(form) {
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+            
+            fetch('student_mngmnt.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert('Student updated successfully');
+                location.reload();
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            });
+        }
+
+        // Helper function to close modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
         // delete student modal - updated to handle confirmation
         document.querySelectorAll('.btn-delete').forEach(button => {
             button.addEventListener('click', function() {
@@ -536,22 +713,39 @@
 
         // Cancel delete
         document.getElementById('cancel-delete').addEventListener('click', function() {
-            document.getElementById('delete-student-modal').style.display = 'none';
+        document.getElementById('delete-student-modal').style.display = 'none';
         });
         // default page
-        showPage('student-management');
-
-        function showToast(message, isSuccess = true) {
-            const toast = document.createElement('div');
-            toast.className = `toast ${isSuccess ? 'success' : 'error'}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
+        function showPage(id) {
+            // Set URL hash
+            window.location.hash = id;
             
-            setTimeout(() => toast.remove(), 3000);
+            // Hide all pages
+            pages.forEach(page => page.style.display = 'none');
+            
+            // Show selected page
+            const target = document.getElementById(id);
+            if (target) target.style.display = 'flex';
+            
+            // Highlight active nav
+            navLinks.forEach(link => link.classList.remove('active'));
+            const activeLink = document.querySelector(`#navbar a[href="#${id}"]`);
+            if (activeLink) activeLink.classList.add('active');
         }
 
-        showToast(result); // For success
-        showToast('Error: ' + error.message, false); // For errors
+        // On page load, check for hash and show appropriate page
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.substring(1);
+            const validPages = ['homepage', 'school-calendar', 'student-management', 
+                            'instructor-management', 'subject-management'];
+            
+            if (hash && validPages.includes(hash)) {
+                showPage(hash);
+            } else {
+                showPage('student-management'); // Default page
+            }
+        });
+
         </script>
 </body>
 </html>

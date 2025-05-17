@@ -1,8 +1,7 @@
 <?php
 require_once '../config.php';
-
+header('Content-Type: application/json');
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
-
 switch ($action) {
     case 'add':
         // Collect and sanitize input
@@ -18,80 +17,106 @@ switch ($action) {
         $section_id = intval($_POST['section_id'] ?? 0);
         $year_level = intval($_POST['year_level'] ?? 0);
         $current_semester = $_POST['current_semester'] ?? '';
-        $sex = 'Others'; // Default value, you might want to add this to your form
+        $sex = trim($_POST['sex'] ?? '');
 
         // Start transaction
         $conn->begin_transaction();
 
         try {
-            // Insert contact info
-            $stmt = $conn->prepare("INSERT INTO contact_information (address, phone_number, email, contact_role, password) 
-                                   VALUES (?, ?, ?, 'Student', ?)");
+            // Insert contact information
+            $stmt = $conn->prepare("INSERT INTO contact_information 
+                                  (address, phone_number, email, contact_role, password) 
+                                  VALUES (?, ?, ?, 'Student', ?)");
             $stmt->bind_param("ssss", $address, $phone_number, $email, $password);
-            $stmt->execute();
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to insert contact information: " . $stmt->error);
+            }
             $contact_id = $stmt->insert_id;
 
-            // Insert student info
+            // Insert student information
             $stmt2 = $conn->prepare("INSERT INTO student_information 
-                                   (lastname, firstname, middle_name, birthdate, contact_id, program_id, 
-                                    section_id, year_level, current_semester, sex) 
+                                   (lastname, firstname, middle_name, birthdate, contact_id, 
+                                    program_id, section_id, year_level, current_semester, sex) 
                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt2->bind_param("ssssiiiiss", $lastname, $firstname, $middle_name, $birthdate, 
                               $contact_id, $program_id, $section_id, $year_level, $current_semester, $sex);
-            $stmt2->execute();
+            if (!$stmt2->execute()) {
+                throw new Exception("Failed to insert student information: " . $stmt2->error);
+            }
             $student_id = $stmt2->insert_id;
 
-            // Create academic records for next 4 years
+            // Create academic records and student grades for next 4 years
             $current_year = date('Y');
-            for ($year = 0; $year < 4; $year++) {
-                $school_year = ($current_year + $year) . '-' . ($current_year + $year + 1);
-                
-                // 1st semester
-                $stmt3 = $conn->prepare("INSERT INTO academic_records 
-                                       (student_id, school_year, semester, gwa) 
-                                       VALUES (?, ?, '1st', 0.00)");
-                $stmt3->bind_param("is", $student_id, $school_year);
-                $stmt3->execute();
-                
-                // 2nd semester
-                $stmt4 = $conn->prepare("INSERT INTO academic_records 
-                                       (student_id, school_year, semester, gwa) 
-                                       VALUES (?, ?, '2nd', 0.00)");
-                $stmt4->bind_param("is", $student_id, $school_year);
-                $stmt4->execute();
-            }
+            $current_month = date('n');
+            $is_second_semester = ($current_month >= 6); // Adjust according to your academic calendar
 
-            // Get all subjects for the student's program
-            $subjects = $conn->query("
-                SELECT subject_id FROM program_subject 
-                WHERE program_id = $program_id
-                ORDER BY year_offered, semester_offered
-            ");
+            for ($year_offset = 0; $year_offset < 4; $year_offset++) {
+                $school_year = ($current_year + $year_offset) . '-' . ($current_year + $year_offset + 1);
+                $student_year_level = $year_level + $year_offset;
 
-            // Create student grades for all subjects in the program
-            while ($subject = $subjects->fetch_assoc()) {
-                $subject_id = $subject['subject_id'];
-                
-                $stmt5 = $conn->prepare("INSERT INTO student_grades 
-                                       (student_id, subject_id, final_grade, school_year, semester, scholastic_status) 
-                                       VALUES (?, ?, 0.00, ?, '1st', 'Regular')");
-                $stmt5->bind_param("iis", $student_id, $subject_id, $school_year);
-                $stmt5->execute();
-                
-                $stmt6 = $conn->prepare("INSERT INTO student_grades 
-                                       (student_id, subject_id, final_grade, school_year, semester, scholastic_status) 
-                                       VALUES (?, ?, 0.00, ?, '2nd', 'Regular')");
-                $stmt6->bind_param("iis", $student_id, $subject_id, $school_year);
-                $stmt6->execute();
+                // Skip if > 4 years
+                if ($student_year_level > 4) {
+                    continue;
+                }
+
+                // Create academic records for both semesters
+                foreach (['1st', '2nd'] as $semester) {
+                    // Insert academic record
+                    $stmt3 = $conn->prepare("INSERT INTO academic_records 
+                                           (student_id, school_year, semester, gwa) 
+                                           VALUES (?, ?, ?, 0.00)");
+                    $stmt3->bind_param("iss", $student_id, $school_year, $semester);
+                    if (!$stmt3->execute()) {
+                        throw new Exception("Failed to create academic record: " . $stmt3->error);
+                    }
+
+                    // Get subjects for this program, year level, and semester
+                    $subjects = $conn->prepare("
+                        SELECT ps.subject_id 
+                        FROM program_subject ps
+                        WHERE ps.program_id = ?
+                        AND ps.year_offered = ?
+                        AND ps.semester_offered = ?
+                    ");
+                    $year_offered = $student_year_level . (($student_year_level == 1) ? 'st' : 
+                                   (($student_year_level == 2) ? 'nd' : 
+                                   (($student_year_level == 3) ? 'rd' : 'th')));
+                    $subjects->bind_param("iss", $program_id, $year_offered, $semester);
+                    if (!$subjects->execute()) {
+                        throw new Exception("Failed to fetch subjects: " . $subjects->error);
+                    }
+                    $subjectResults = $subjects->get_result();
+
+                    // Create grade records for each subject
+                    while ($subject = $subjectResults->fetch_assoc()) {
+                        $stmt4 = $conn->prepare("
+                            INSERT INTO student_grades 
+                            (student_id, subject_id, final_grade, school_year, semester, scholastic_status) 
+                            VALUES (?, ?, 0.00, ?, ?, 'Regular')
+                        ");
+                        $stmt4->bind_param("iiss", $student_id, $subject['subject_id'], $school_year, $semester);
+                        if (!$stmt4->execute()) {
+                            throw new Exception("Failed to create grade record: " . $stmt4->error);
+                        }
+                    }
+                }
             }
 
             $conn->commit();
-            echo "Student added successfully with all academic records.";
-        } catch (Exception $e) {
-            $conn->rollback();
-            echo "Error: " . $e->getMessage();
-        }
+            echo json_encode([
+                'success' => true,
+                'message' => 'Student added successfully with academic records for 4 years.',
+                'student_id' => $student_id
+            ]);
+            } catch (Exception $e) {
+                $conn->rollback();
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Error: ' . $e->getMessage()
+                ]);
+            }
         break;
+
 
     case 'edit':
         $student_id = intval($_POST['student_id'] ?? 0);
@@ -108,6 +133,7 @@ switch ($action) {
         $section_id = intval($_POST['section_id'] ?? 0);
         $year_level = intval($_POST['year_level'] ?? 0);
         $current_semester = $_POST['current_semester'] ?? '';
+        $sex = trim($_POST['sex'] ?? '');
 
         // Start transaction
         $conn->begin_transaction();
@@ -130,18 +156,20 @@ switch ($action) {
             // Update student info
             $stmt2 = $conn->prepare("UPDATE student_information 
                                    SET lastname=?, firstname=?, middle_name=?, birthdate=?,
-                                       program_id=?, section_id=?, year_level=?, current_semester=?
+                                       program_id=?, section_id=?, year_level=?, current_semester=?, sex =?
                                    WHERE student_id=?");
             $stmt2->bind_param("ssssiiiisi", $lastname, $firstname, $middle_name, $birthdate,
-                              $program_id, $section_id, $year_level, $current_semester, $student_id);
-            $stmt2->execute();
+                              $program_id, $section_id, $year_level, $current_semester, $sex, $student_id);
+             if (!$stmt2->execute()) {
+            throw new Exception("Failed to update student information: " . $stmt2->error);
+            }
 
-            $conn->commit();
-            echo "Student updated successfully.";
-        } catch (Exception $e) {
-            $conn->rollback();
-            echo "Error updating student: " . $e->getMessage();
-        }
+                $conn->commit();
+                echo "Student updated successfully.";
+            } catch (Exception $e) {
+                $conn->rollback();
+                echo "Error updating student: " . $e->getMessage();
+            }
         break;
 
     case 'delete':
@@ -181,14 +209,13 @@ switch ($action) {
 
             $conn->commit();
             echo "Student deleted successfully.";
-        } catch (Exception $e) {
-            $conn->rollback();
-            echo "Error deleting student: " . $e->getMessage();
-        }
+            } catch (Exception $e) {
+                $conn->rollback();
+                echo "Error deleting student: " . $e->getMessage();
+            }
         break;
 
     default:
-        echo "Invalid action.";
+       
         break;
 }
-?>
