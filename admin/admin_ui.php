@@ -117,7 +117,91 @@
     <!-- MODALS SECTION -->
     <!-- Student Modals -->
         <!-- add student modal -->
-        
+        <div id="add-student-modal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" id="close-add-student">&times;</span>
+                <h2>Add Student</h2>
+                <form id="add-student-form" action="add_student.php" method="POST">
+                    <div class="form-style">
+                        <label for="lastname">Last Name*</label>
+                        <input type="text" id="lastname" name="lastname" required>
+                    </div>
+                    <div class="form-style">
+                        <label for="firstname">First Name*</label>
+                        <input type="text" id="firstname" name="firstname" required>
+                    </div>
+                    <div class="form-style">
+                        <label for="middle_name">Middle Name</label>
+                        <input type="text" id="middle_name" name="middle_name">
+                    </div>
+                    <div class="form-style">
+                        <label for="birthdate">Birthdate*</label>
+                        <input type="date" id="birthdate" name="birthdate" required>
+                    </div>
+                    <div class="form-style">
+                        <label for="address">Address*</label>
+                        <input type="text" id="address" name="address" required>
+                    </div>
+                    <div class="form-style">
+                        <label for="phone_number">Phone Number*</label>
+                        <input type="text" id="phone_number" name="phone_number" required>
+                    </div>
+                    <div class="form-style">
+                        <label for="email">Email*</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-style">
+                        <label for="password">Password*</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="form-style">
+                        <label for="program_id">Program*</label>
+                        <select id="program_id" name="program_id" required>
+                            <option value="">Select Program</option>
+                            <?php
+                                $progQuery = $conn->query("SELECT program_id, program_name FROM program ORDER BY program_name");
+                                while($prog = $progQuery->fetch_assoc()) {
+                                    echo "<option value='{$prog['program_id']}'>{$prog['program_name']}</option>";
+                                }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="form-style">
+                        <label for="section_id">Section*</label>
+                        <select id="section_id" name="section_id" required>
+                            <option value="">Select Section</option>
+                            <?php
+                                $secQuery = $conn->query("SELECT section_id, section_name FROM section ORDER BY section_name");
+                                while($sec = $secQuery->fetch_assoc()) {
+                                    echo "<option value='{$sec['section_id']}'>{$sec['section_name']}</option>";
+                                }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="form-style">
+                        <label for="year_level">Year Level*</label>
+                        <select id="year_level" name="year_level" required>
+                            <option value="">Select Year</option>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+                    <div class="form-style">
+                        <label for="current_semester">Semester*</label>
+                        <select id="current_semester" name="current_semester" required>
+                            <option value="">Select Semester</option>
+                            <option value="1st">1st Semester</option>
+                            <option value="2nd">2nd Semester</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-style">Add Student</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     
     <script>
         const toggleBtn = document.getElementById('toggle-nav');
@@ -154,6 +238,25 @@
                 showPage(targetId);
             });
         });
+
+         // add student modal
+            const addStudentBtn = document.getElementById('add-student');
+            const addStudentModal = document.getElementById('add-student-modal');
+            const closeAddStudent = document.getElementById('close-add-student');
+
+            addStudentBtn.addEventListener('click', () => {
+                addStudentModal.style.display = 'block';
+            });
+
+            closeAddStudent.addEventListener('click', () => {
+                addStudentModal.style.display = 'none';
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target == addStudentModal) {
+                    addStudentModal.style.display = 'none';
+                }
+            });
 
         // default page
         showPage('student-management');
