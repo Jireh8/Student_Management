@@ -373,19 +373,11 @@
             width: 100%;
             box-sizing: border-box;
         }
-
-        /* Make the form actions (submit button) span both columns */
         .form-actions {
             grid-column: 1 / span 2;
             margin-top: 10px;
             text-align: right;
         }
-
-        .btn-style {
-            padding: 7px 14px;
-            font-size: 14px;
-        }
-
         .close {
             font-size: 22px;
             top: 8px;
@@ -398,3 +390,48 @@
             text-decoration: none;
             cursor: pointer;
         }
+        /* Delete Student Modal */
+        #delete-student-modal .modal-content {
+            width: 320px;
+            padding: 18px 20px;
+            margin: 120px auto;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+            text-align: center;
+        }
+
+        #delete-student-modal h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        #delete-student-modal p {
+            font-size: 15px;
+            margin-bottom: 18px;
+        }
+
+        #delete-student-modal .btn-style {
+            width: 100px;
+            margin: 0 8px;
+            padding: 7px 0;
+            font-size: 15px;
+        }
+
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 24px;
+        border-radius: 4px;
+        color: white;
+        z-index: 1000;
+        animation: fadeIn 0.3s;
+    }
+    .toast.success { background: #4CAF50; }
+    .toast.error { background: #F44336; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }

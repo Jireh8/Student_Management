@@ -121,7 +121,8 @@
             <div class="modal-content">
                 <span class="close" id="close-add-student">&times;</span>
                 <h2>Add Student</h2>
-                <form id="add-student-form" action="add_student.php" method="POST">
+                <form id="add-student-form" method="POST">
+                    <input type="hidden" name="action" value="add">
                     <div class="form-style">
                         <label for="lastname" style="grid-row:1;grid-column:1">Last Name*</label>
                         <input type="text" id="lastname" name="lastname" required>
@@ -202,7 +203,106 @@
                 </form>
             </div>
         </div>
-    
+
+        <!-- edit student modal -->
+        <div id="edit-student-modal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" id="close-edit-student">&times;</span>
+                <h2>Edit Student</h2>
+                <form id="edit-student-form" action="student_mngmnt.php" method="POST">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" id="edit-student-id" name="student_id">
+                    <input type="hidden" id="edit-contact-id" name="contact_id">
+                    <div class="form-style">
+                        <label for="edit-lastname" style="grid-row:1;grid-column:1">Last Name*</label>
+                        <input type="text" id="edit-lastname" name="lastname" required>
+                    </div>
+                    <div class="form-style">
+                        <label for="edit-firstname" style="grid-row:2;grid-column:1">First Name*</label>
+                        <input type="text" id="edit-firstname" name="firstname" required>
+                    </div>
+                    <div class="form-style" style="grid-row:3;grid-column:1">
+                        <label for="edit-middle_name">Middle Name</label>
+                        <input type="text" id="edit-middle_name" name="middle_name">
+                    </div>
+                    <div class="form-style" style="grid-row:4;grid-column:1">
+                        <label for="edit-birthdate">Birthdate*</label>
+                        <input type="date" id="edit-birthdate" name="birthdate" required>
+                    </div>
+                    <div class="form-style" style="grid-row:5;grid-column:1">
+                        <label for="edit-address">Address*</label>
+                        <input type="text" id="edit-address" name="address" required>
+                    </div>
+                    <div class="form-style" style="grid-row:6;grid-column:1">
+                        <label for="edit-phone_number">Phone Number*</label>
+                        <input type="text" id="edit-phone_number" name="phone_number" required>
+                    </div>
+                    <div class="form-style" style="grid-row:1;grid-column:2">
+                        <label for="edit-email">Email*</label>
+                        <input type="email" id="edit-email" name="email" required>
+                    </div>
+                    <div class="form-style" style="grid-row:2;grid-column:2">
+                        <label for="edit-password">Password (leave blank to keep current)</label>
+                        <input type="password" id="edit-password" name="password">
+                    </div>
+                    <div class="form-style" style="grid-row:3;grid-column:2">
+                        <label for="edit-program_id">Program*</label>
+                        <select id="edit-program_id" name="program_id" required>
+                            <option value="">Select Program</option>
+                            <?php
+                                $progQuery = $conn->query("SELECT program_id, program_name FROM program ORDER BY program_name");
+                                while($prog = $progQuery->fetch_assoc()) {
+                                    echo "<option value='{$prog['program_id']}'>{$prog['program_name']}</option>";
+                                }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="form-style" style="grid-row:4;grid-column:2">
+                        <label for="edit-section_id">Section*</label>
+                        <select id="edit-section_id" name="section_id" required>
+                            <option value="">Select Section</option>
+                            <?php
+                                $secQuery = $conn->query("SELECT section_id, section_name FROM section ORDER BY section_name");
+                                while($sec = $secQuery->fetch_assoc()) {
+                                    echo "<option value='{$sec['section_id']}'>{$sec['section_name']}</option>";
+                                }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="form-style" style="grid-row:5;grid-column:2">
+                        <label for="edit-year_level">Year Level*</label>
+                        <select id="edit-year_level" name="year_level" required>
+                            <option value="">Select Year</option>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                        </select>
+                    </div>
+                    <div class="form-style" style="grid-row:6;grid-column:2">
+                        <label for="edit-current_semester">Semester*</label>
+                        <select id="edit-current_semester" name="current_semester" required>
+                            <option value="">Select Semester</option>
+                            <option value="1st">1st Semester</option>
+                            <option value="2nd">2nd Semester</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-style">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- delete student modal -->
+        <div id="delete-student-modal" class="modal" style="display:none;">
+            <div class="modal-content delete-student-modal">
+                <span class="close" id="close-delete-student">&times;</span>
+                <h2>Delete Student</h2>
+                <p>Are you sure you want to delete this student?</p>
+                <button id="confirm-delete" class="btn-delete">Delete</button>
+                <button id="cancel-delete" class="btn-style">Cancel</button>
+            </div>
+        </div>
     <script>
         // Toggle navigation bar
                 const toggleBtn = document.getElementById('toggle-nav');
@@ -240,7 +340,17 @@
                     });
                 });
 
-        // add student modal
+        //student management
+        async function refreshStudentTable() {
+            try {
+                const response = await fetch('get_students.php');
+                const html = await response.text();
+                document.querySelector('#student-management table tbody').innerHTML = html;
+            } catch (error) {
+                console.error('Failed to refresh table:', error);
+            }
+        }
+        // add student button
             const addStudentBtn = document.getElementById('add-student');
             const addStudentModal = document.getElementById('add-student-modal');
             const closeAddStudent = document.getElementById('close-add-student');
@@ -258,9 +368,190 @@
                     addStudentModal.style.display = 'none';
                 }
             });
+        document.getElementById('add-student-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.textContent;
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Adding Student...';
+            
+            try {
+                const response = await fetch('student_mngmnt.php', {
+                    method: 'POST',
+                    body: new FormData(form)
+                });
+                
+                const result = await response.text();
+                
+                if (response.ok) {
+                    alert(result);
+                    form.reset();
+                    document.getElementById('add-student-modal').style.display = 'none';
+                    refreshStudentTable();
+                } else {
+                    throw new Error(result || 'Failed to add student');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+            }
+        });
+        // delete student button
+            const deleteStudentBtn = document.getElementById('delete-student');
+            const deleteStudentModal = document.getElementById('delete-student-modal');
+            const closeDeleteStudent = document.getElementById('close-delete-student');
 
+            deleteStudentBtn.addEventListener('click', () => {
+                deleteStudentModal.style.display = 'block';
+            });
+
+            closeDeleteStudent.addEventListener('click', () => {
+                deleteStudentModal.style.display = 'none';
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target == deleteStudentModal) {
+                    deleteStudentModal.style.display = 'none';
+                }
+            });
+        // edit student modal - updated to populate form with student data
+        document.querySelectorAll('.btn-edit').forEach(button => {
+            button.addEventListener('click', function() {
+                const row = this.closest('tr');
+                const studentId = row.cells[0].textContent;
+                
+                // Show loading state
+                const modal = document.getElementById('edit-student-modal');
+                modal.style.display = 'block';
+                modal.querySelector('.modal-content').innerHTML = '<p>Loading student data...</p>';
+                
+                // Fetch student data via AJAX
+                fetch(`get_student.php?student_id=${studentId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if(data.success) {
+                            // Restore the modal content
+                            modal.querySelector('.modal-content').innerHTML = `
+                                <span class="close" id="close-edit-student">&times;</span>
+                                <h2>Edit Student</h2>
+                                <form id="edit-student-form" action="student_mngmnt.php" method="POST">
+                                    <input type="hidden" name="action" value="edit">
+                                    <input type="hidden" id="edit-student-id" name="student_id" value="${data.student_id}">
+                                    <input type="hidden" id="edit-contact-id" name="contact_id" value="${data.contact_id}">
+                                    <!-- Rest of your form fields populated with data -->
+                                    <div class="form-style">
+                                        <label for="edit-lastname" style="grid-row:1;grid-column:1">Last Name*</label>
+                                        <input type="text" id="edit-lastname" name="lastname" value="${data.lastname}" required>
+                                    </div>
+                                    <!-- Include all other form fields similarly -->
+                                </form>
+                            `;
+                            
+                            // Reattach close event
+                            document.getElementById('close-edit-student').addEventListener('click', () => {
+                                modal.style.display = 'none';
+                            });
+                        } else {
+                            modal.querySelector('.modal-content').innerHTML = `
+                                <span class="close" id="close-edit-student">&times;</span>
+                                <h2>Error</h2>
+                                <p>${data.message || 'Failed to load student data'}</p>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        modal.querySelector('.modal-content').innerHTML = `
+                            <span class="close" id="close-edit-student">&times;</span>
+                            <h2>Error</h2>
+                            <p>Failed to load student data. Please try again.</p>
+                        `;
+                    });
+            });
+        });
+        // edit student close
+        const closeEditStudent = document.getElementById('close-edit-student');
+        closeEditStudent.addEventListener('click', () => {
+            document.getElementById('edit-student-modal').style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target == document.getElementById('edit-student-modal')) {
+                document.getElementById('edit-student-modal').style.display = 'none';
+            }
+        });
+
+        // delete student modal - updated to handle confirmation
+        document.querySelectorAll('.btn-delete').forEach(button => {
+            button.addEventListener('click', function() {
+                const row = this.closest('tr');
+                const studentId = row.cells[0].textContent;
+                const studentName = row.cells[1].textContent;
+                
+                // Set student ID for deletion
+                document.getElementById('confirm-delete').dataset.studentId = studentId;
+                
+                // Update confirmation message
+                document.querySelector('#delete-student-modal p').textContent = 
+                    `Are you sure you want to delete ${studentName} (ID: ${studentId})?`;
+                    
+                // Show modal
+                document.getElementById('delete-student-modal').style.display = 'block';
+            });
+        });
+
+        // Handle delete confirmation
+        document.getElementById('confirm-delete').addEventListener('click', function() {
+            const studentId = this.dataset.studentId;
+            
+            fetch('student_mngmnt.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=delete&student_id=${studentId}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+                location.reload(); // Refresh the page
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting student');
+            });
+        });
+
+        // Cancel delete
+        document.getElementById('cancel-delete').addEventListener('click', function() {
+            document.getElementById('delete-student-modal').style.display = 'none';
+        });
         // default page
         showPage('student-management');
-    </script>
+
+        function showToast(message, isSuccess = true) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${isSuccess ? 'success' : 'error'}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        showToast(result); // For success
+        showToast('Error: ' + error.message, false); // For errors
+        </script>
 </body>
 </html>
