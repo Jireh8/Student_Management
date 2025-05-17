@@ -42,6 +42,7 @@
             $_SESSION['scho_status'] = $user['scholastic_status'];
             $_SESSION['school_year'] = $user['school_year'];
             $_SESSION['department'] = $user['department_name'];
+            $_SESSION['program_id'] = $user['program_id'];
 
             header("Location: student_ui.php?success=1");
             exit();
