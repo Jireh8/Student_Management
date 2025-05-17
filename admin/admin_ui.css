@@ -1,4 +1,4 @@
-body {
+        body {
         margin: 0;
         font-family: Roboto, system-ui, sans-serif;
         background-color: #26ac1f10;
@@ -250,6 +250,32 @@ body {
                 border-radius: 5px;
                 transition: all 0.3s ease;
             }
+            .btn-edit {
+                background-color: #d2bb46;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                font-size: 16px;
+                cursor: pointer;
+                border-radius: 5px;
+                transition: all 0.3s ease;
+            }
+            .btn-edit:hover {
+                background-color: #8a8548;
+            }
+            .btn-delete {
+                background-color: #e53935;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                font-size: 16px;
+                cursor: pointer;
+                border-radius: 5px;
+                transition: all 0.3s ease;
+            }
+            .btn-delete:hover {
+                background-color: #b71c1c;
+            }
             .btn-style:hover {
                 background-color: #1f8c18;
                 transform: translateY(-1px);
@@ -323,13 +349,15 @@ body {
         .modal-content form {
             display: grid;
             grid-template-columns: 1fr 1fr;
+            grid-auto-flow: row;
             gap: 12px 18px;
         }
 
         .form-style {
             margin-bottom: 0;
             width: 100%;
-            /* Remove width: 90% and margin: 20px auto; if present */
+            display: block;
+            gap: 0px;
         }
 
         .form-style label {
