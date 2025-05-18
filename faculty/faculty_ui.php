@@ -690,9 +690,40 @@
             }
         });
 
-        // Helper to get the current school year (static)
+        // Function to get the current school year based on the month
         function getCurrentSchoolYear() {
-            return '2024-2025';
+            const now = new Date();
+            let year = now.getFullYear();
+            let month = now.getMonth() + 1; // JS months: 0-11
+
+            // Assume 1st sem: June (6) - October (10), 2nd sem: November (11) - March (3)
+            // Summer: April (4) - May (5) [optional]
+            let startYear, endYear, semester;
+
+            if (month >= 6 && month <= 10) {
+            // 1st Semester
+            startYear = year;
+            endYear = year + 1;
+            semester = '1st';
+            } else if (month >= 11 || month <= 3) {
+            // 2nd Semester
+            if (month >= 11) {
+                startYear = year;
+                endYear = year + 1;
+            } else {
+                startYear = year - 1;
+                endYear = year;
+            }
+            semester = '2nd';
+            } else {
+            // Summer (April-May)
+            startYear = year - 1;
+            endYear = year;
+            semester = 'Summer';
+            }
+            // You can return both school year and semester if needed
+            // return { schoolYear: `${startYear}-${endYear}`, semester: semester };
+            return `${startYear}-${endYear}`;
         }
 
         let currentSectionId = null;
