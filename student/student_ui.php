@@ -195,7 +195,7 @@
                                 }
                                 
                                 // calculate gwa and display
-                                if ($counter > 1) {
+                                if ($counter > 1 && $totalUnits > 0) {
                                     $gwa = $weightedSum / $totalUnits;
                                     echo "<tr class='gwa-row'>
                                             <td colspan='3'><strong>Total Units: $totalUnits</strong></td>
