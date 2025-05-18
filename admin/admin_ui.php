@@ -173,7 +173,7 @@
                 </tbody>
             </table>
         </div>
-
+        <!-- Subject Management -->
         <div id="subject-management" class="display-page">
             <div class="title-container">
                 <h2 class = "title-style">Subject Management</h2>
@@ -385,6 +385,110 @@
                 <button id="cancel-delete" class="btn-style">Cancel</button>
             </div>
         </div>
+    <!-- Instructor Modals -->
+        <!-- add instructor modal -->
+        <div id="add-instructor-modal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" id="close-add-instructor">&times;</span>
+                <h2>Add Instructor</h2>
+                <form id="add-instructor-form" method="POST">
+                    <input type="hidden" name="action" value="add">
+                    <div class="form-style">
+                        <label for="instructor_name" style="grid-row:1;grid-column:1">Instructor Name*</label>
+                        <input type="text" id="instructor_name" name="instructor_name" required>   
+                    </div>
+                    <div class="form-style">
+                        <label for="instructor_email" style="grid-row:2;grid-column:1">Email*</label>
+                        <input type="email" id="instructor_email" name="email" required>
+                    </div>
+                    <div class="form-style" style="grid-row:3;grid-column:1">
+                        <label for="instructor_department">Department*</label>
+                        <select id="instructor_department" name="department_id" required>
+                            <option value="">Select Department</option>
+                            <?php
+                                $deptQuery = $conn->query("SELECT department_id, department_name FROM department ORDER BY department_name");
+                                while($dept = $deptQuery->fetch_assoc()) {
+                                    echo "<option value='{$dept['department_id']}'>{$dept['department_name']}</option>";
+                                }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="form-style">
+                        <label for="instructor_phone_number" style="grid-row:4;grid-column:1">Phone Number*</label>
+                        <input type="text" id="instructor_phone_number" name="phone_number" required>
+                    </div>
+                    <div class="form-style">
+                        <label for="instructor_password" style="grid-row:5;grid-column:1">Password*</label>
+                        <input type="password" id="instructor_password" name="password" required>
+                    </div>
+                    <div class="form-style">
+                        <label for="instructor_address" style="grid-row:6;grid-column:1">Address*</label>
+                        <input type="text" id="instructor_address" name="address" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-style">Add Instructor</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- edit instructor modal -->
+        <div id="edit-instructor-modal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" id="close-edit-instructor">&times;</span>
+                <h2>Edit Instructor</h2>
+                <form id="edit-instructor-form" method="POST">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" id="edit-instructor-id" name="instructor_id">
+                    <div class="form-style  ">
+                        <label for="edit-instructor_name" style="grid-row:1;grid-column:1">Instructor Name*</label>
+                        <input type="text" id="edit-instructor_name" name="instructor_name" required>
+                    </div>
+                    <div class="form-style  ">
+                        <label for="edit-instructor_email" style="grid-row:2;grid-column:1">Email*</label>
+                        <input type="email" id="edit-instructor_email" name="email" required>
+                    </div>
+                    <div class="form-style  ">
+                        <label for="edit-instructor_department">Department*</label>
+                        <select id="edit-instructor_department" name="department_id" required>
+                            <option value="">Select Department</option>
+                            <?php
+                                $deptQuery = $conn->query("SELECT department_id, department_name FROM department ORDER BY department_name");
+                                while($dept = $deptQuery->fetch_assoc()) {
+                                    echo "<option value='{$dept['department_id']}'>{$dept['department_name']}</option>";
+                                }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="form-style  ">
+                        <label for="edit-instructor_phone_number" style="grid-row:4;grid-column:1">Phone Number*</label>
+                        <input type="text" id="edit-instructor_phone_number" name="phone_number" required>
+                    </div>
+                    <div class="form-style  ">
+                        <label for="edit-instructor_password" style="grid-row:5;grid-column:1">Password (leave blank to keep current)</label>
+                        <input type="password" id="edit-instructor_password" name="password">
+                    </div>
+                    <div class="form-style  ">
+                        <label for="edit-instructor_address" style="grid-row:6;grid-column:1">Address*</label>
+                        <input type="text" id="edit-instructor_address" name="address" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-style">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- delete instructor modal -->
+        <div id="delete-instructor-modal" class="modal" style="display:none;">
+            <div class="modal-content delete-instructor-modal">
+                <span class="close" id="close-delete-instructor">&times;</span>
+                <h2>Delete Instructor</h2>
+                <p>Are you sure you want to delete this instructor?</p>
+                <button id="confirm-delete-instructor" class="btn-delete">Delete</button>
+                <button id="cancel-delete-instructor" class="btn-style">Cancel</button>
+            </div>
+        </div>
+        
+                        
     <script>
         // Toggle navigation bar
                 const toggleBtn = document.getElementById('toggle-nav');
@@ -780,6 +884,228 @@
             });
         
         //instructor management
+            // Add Instructor Modal
+            const addInstructorBtn = document.querySelector('#instructor-management #add-student');
+            const addInstructorModal = document.getElementById('add-instructor-modal');
+            const closeAddInstructor = document.getElementById('close-add-instructor');
+
+            addInstructorBtn.addEventListener('click', () => {
+                addInstructorModal.style.display = 'block';
+            });
+
+            closeAddInstructor.addEventListener('click', () => {
+                addInstructorModal.style.display = 'none';
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target == addInstructorModal) {
+                    addInstructorModal.style.display = 'none';
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.id === 'add-first-instructor') {
+                    document.getElementById('add-instructor-modal').style.display = 'block';
+                }
+            });
+
+            document.getElementById('add-instructor-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const form = e.target;
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Adding Instructor...';
+                try {
+                    const response = await fetch('instructor_mngmnt.php', {
+                        method: 'POST',
+                        body: new FormData(form)
+                    });
+                    const result = await response.text();
+                    if (response.ok) {
+                        alert(result);
+                        form.reset();
+                        addInstructorModal.style.display = 'none';
+                        location.reload();
+                    } else {
+                        throw new Error(result || 'Failed to add instructor');
+                    }
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalBtnText;
+                }
+            });
+
+            // Edit Instructor Modal
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.id === 'edit-instructor') {
+                    const row = e.target.closest('tr');
+                    const instructorId = row.cells[0].textContent;
+                    // Show loading state
+                    const modal = document.getElementById('edit-instructor-modal');
+                    modal.style.display = 'block';
+                    modal.querySelector('.modal-content').innerHTML = '<div style="padding:20px;text-align:center;">Loading instructor data...</div>';
+                    fetchInstructorData(instructorId);
+                }
+            });
+
+            function fetchInstructorData(instructorId) {
+                fetch(`get_instructor.php?instructor_id=${instructorId}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            populateEditInstructorForm(data.data);
+                        } else {
+                            alert(data.message);
+                            closeModal('edit-instructor-modal');
+                        }
+                    })
+                    .catch(error => {
+                        alert('Error fetching instructor data: ' + error.message);
+                        closeModal('edit-instructor-modal');
+                    });
+            }
+
+            function generateDepartmentOptions(selectedId) {
+                const options = [];
+                const deptSelect = document.getElementById('instructor_department');
+                if (deptSelect) {
+                    Array.from(deptSelect.options).forEach(option => {
+                        if (option.value) {
+                            const selected = parseInt(option.value) === parseInt(selectedId) ? 'selected' : '';
+                            options.push(`<option value="${option.value}" ${selected}>${option.text}</option>`);
+                        }
+                    });
+                }
+                return options.join('');
+            }
+
+            function populateEditInstructorForm(data) {
+                const modal = document.getElementById('edit-instructor-modal');
+                modal.querySelector('.modal-content').innerHTML = `
+                    <span class="close" id="close-edit-instructor">&times;</span>
+                    <h2>Edit Instructor</h2>
+                    <form id="edit-instructor-form">
+                        <input type="hidden" name="action" value="edit">
+                        <input type="hidden" id="edit-instructor-id" name="instructor_id" value="${data.instructor_id}">
+                        <div class="form-style">
+                            <label for="edit-instructor_name" style="grid-row:1;grid-column:1">Instructor Name*</label>
+                            <input type="text" id="edit-instructor_name" name="instructor_name" value="${data.instructor_name}" required>
+                        </div>
+                        <div class="form-style">
+                            <label for="edit-instructor_email" style="grid-row:2;grid-column:1">Email*</label>
+                            <input type="email" id="edit-instructor_email" name="email" value="${data.email}" required>
+                        </div>
+                        <div class="form-style">
+                            <label for="edit-instructor_department">Department*</label>
+                            <select id="edit-instructor_department" name="department_id" required>
+                                <option value="">Select Department</option>
+                                ${generateDepartmentOptions(data.department_id)}
+                            </select>
+                        </div>
+                        <div class="form-style">
+                            <label for="edit-instructor_phone_number" style="grid-row:4;grid-column:1">Phone Number*</label>
+                            <input type="text" id="edit-instructor_phone_number" name="phone_number" value="${data.phone_number}" required>
+                        </div>
+                        <div class="form-style">
+                            <label for="edit-instructor_password" style="grid-row:5;grid-column:1">Password (leave blank to keep current)</label>
+                            <input type="password" id="edit-instructor_password" name="password">
+                        </div>
+                        <div class="form-style">
+                            <label for="edit-instructor_address" style="grid-row:6;grid-column:1">Address*</label>
+                            <input type="text" id="edit-instructor_address" name="address" value="${data.address}" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-style">Save Changes</button>
+                            <button type="button" class="btn-style" id="cancel-edit-instructor">Cancel</button>
+                        </div>
+                    </form>
+                `;
+                document.getElementById('close-edit-instructor').addEventListener('click', () => {
+                    closeModal('edit-instructor-modal');
+                });
+                document.getElementById('cancel-edit-instructor').addEventListener('click', () => {
+                    closeModal('edit-instructor-modal');
+                });
+                document.getElementById('edit-instructor-form').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitEditInstructorForm(this);
+                });
+            }
+
+            function submitEditInstructorForm(form) {
+                const formData = new FormData(form);
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Saving...';
+                fetch('instructor_mngmnt.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.text())
+                .then(data => {
+                    alert('Instructor updated successfully');
+                    location.reload();
+                })
+                .catch(error => {
+                    alert('Error: ' + error.message);
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                });
+            }
+
+            window.addEventListener('click', function(event) {
+                const editModal = document.getElementById('edit-instructor-modal');
+                if (event.target === editModal) {
+                    closeModal('edit-instructor-modal');
+                }
+            });
+
+            // Delete Instructor Modal
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.id === 'delete-instructor') {
+                    const row = e.target.closest('tr');
+                    const instructorId = row.cells[0].textContent;
+                    const instructorName = row.cells[1].textContent;
+                    document.getElementById('confirm-delete-instructor').dataset.instructorId = instructorId;
+                    document.querySelector('#delete-instructor-modal p').textContent =
+                        `Are you sure you want to delete ${instructorName} (ID: ${instructorId})?`;
+                    document.getElementById('delete-instructor-modal').style.display = 'block';
+                }
+            });
+
+            document.getElementById('confirm-delete-instructor').addEventListener('click', function() {
+                const instructorId = this.dataset.instructorId;
+                fetch('instructor_mngmnt.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `action=delete&instructor_id=${instructorId}`
+                })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);
+                    location.reload();
+                })
+                .catch(error => {
+                    alert('Error deleting instructor');
+                });
+            });
+
+            document.getElementById('cancel-delete-instructor').addEventListener('click', function() {
+                document.getElementById('delete-instructor-modal').style.display = 'none';
+            });
+
+        // subject management
 
 
         // default page
