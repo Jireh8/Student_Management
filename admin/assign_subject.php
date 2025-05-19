@@ -11,8 +11,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $instructorId = $_POST['instructor_id'] ?? null;
 $subjectId = $_POST['subject_id'] ?? null;
 $sectionId = $_POST['section_id'] ?? null;
+$dayOfWeek = $_POST['day_of_week'] ?? null;
+$startTime = $_POST['start_time'] ?? null;
+$endTime = $_POST['end_time'] ?? null;
+$roomNumber = $_POST['room_number'] ?? null;
 
-if (!$instructorId || !$subjectId || !$sectionId) {
+if (
+    !$instructorId || !$subjectId || !$sectionId ||
+    !$dayOfWeek || !$startTime || !$endTime || !$roomNumber
+) {
     echo json_encode(['success' => false, 'message' => 'Missing required parameters']);
     exit;
 }
@@ -25,8 +32,16 @@ try {
     ");
     $stmt->bind_param("iii", $subjectId, $instructorId, $sectionId);
     $stmt->execute();
-    $sisId = $stmt->insert_id;
-    
+    $sisId = $conn->insert_id;
+
+    // Insert the schedule
+    $stmt2 = $conn->prepare("
+        INSERT INTO schedule (sis_id, day_of_week, start_time, end_time, room_number)
+        VALUES (?, ?, ?, ?, ?)
+    ");
+    $stmt2->bind_param("isssi", $sisId, $dayOfWeek, $startTime, $endTime, $roomNumber);
+    $stmt2->execute();
+
     // Get subject and section details for response
     $detailsQuery = $conn->prepare("
         SELECT s.subject_code, s.subject_name, s.units, sec.section_name
@@ -37,7 +52,7 @@ try {
     $detailsQuery->bind_param("ii", $sectionId, $subjectId);
     $detailsQuery->execute();
     $details = $detailsQuery->get_result()->fetch_assoc();
-    
+
     echo json_encode([
         'success' => true,
         'sis_id' => $sisId,

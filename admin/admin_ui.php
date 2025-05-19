@@ -378,7 +378,31 @@ function getAllSections($conn) {
                                     ?>
                                 </select>
                             </div>
-                            
+                            <div class="form-group">
+    <label for="day_of_week">Day of Week:</label>
+    <select id="day_of_week" name="day_of_week" required>
+        <option value="">Select Day</option>
+        <option value="monday">Monday</option>
+        <option value="tuesday">Tuesday</option>
+        <option value="wednesday">Wednesday</option>
+        <option value="thursday">Thursday</option>
+        <option value="friday">Friday</option>
+        <option value="saturday">Saturday</option>
+        <option value="sunday">Sunday</option>
+    </select>
+</div>
+<div class="form-group">
+    <label for="start_time">Start Time:</label>
+    <input type="time" id="start_time" name="start_time" required>
+</div>
+<div class="form-group">
+    <label for="end_time">End Time:</label>
+    <input type="time" id="end_time" name="end_time" required>
+</div>
+<div class="form-group">
+    <label for="room_number">Room Number:</label>
+    <input type="number" id="room_number" name="room_number" required>
+</div>
                             <div class="form-actions">
                                 <button type="submit" class="btn-manage">Assign Subject</button>
                             </div>
@@ -1375,42 +1399,44 @@ function getAllSections($conn) {
                 // Form submission
                 assignForm.addEventListener('submit', function(e) {
                     e.preventDefault();
-                    
+
                     const instructorId = modalInstructorId.value;
                     const subjectId = document.getElementById('subject-select').value;
                     const sectionId = document.getElementById('section-select').value;
+                    const dayOfWeek = document.getElementById('day_of_week').value;
+                    const startTime = document.getElementById('start_time').value;
+                    const endTime = document.getElementById('end_time').value;
+                    const roomNumber = document.getElementById('room_number').value;
                     const submitBtn = this.querySelector('button[type="submit"]');
 
-                    // Validate selection
-                    if (!subjectId || !sectionId) {
-                        alert('Please select both subject and section');
+                    if (!subjectId || !sectionId || !dayOfWeek || !startTime || !endTime || !roomNumber) {
+                        alert('Please fill in all fields');
                         return;
                     }
 
-                    // Disable button during processing
                     submitBtn.disabled = true;
                     submitBtn.textContent = 'Assigning...';
 
                     fetch('assign_subject.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `instructor_id=${instructorId}&subject_id=${subjectId}&section_id=${sectionId}`
+                        body: `instructor_id=${instructorId}&subject_id=${subjectId}&section_id=${sectionId}` +
+                            `&day_of_week=${encodeURIComponent(dayOfWeek)}` +
+                            `&start_time=${encodeURIComponent(startTime)}` +
+                            `&end_time=${encodeURIComponent(endTime)}` +
+                            `&room_number=${encodeURIComponent(roomNumber)}`
                     })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            // Refresh assignments list
                             loadCurrentAssignments(instructorId);
-                            // Reset form
                             assignForm.reset();
-                            // Show success
-                            alert('Subject assigned successfully');
+                            alert('Subject and schedule assigned successfully');
                         } else {
                             throw new Error(data.message || 'Failed to assign subject');
                         }
                     })
                     .catch(error => {
-                        console.error('Error:', error);
                         alert('Error: ' + error.message);
                     })
                     .finally(() => {
@@ -1418,7 +1444,6 @@ function getAllSections($conn) {
                         submitBtn.textContent = 'Assign Subject';
                     });
                 });
-
                 // Load current assignments
                 function loadCurrentAssignments(instructorId) {
                     currentAssignments.innerHTML = '<div class="loading-message">Loading current assignments...</div>';
