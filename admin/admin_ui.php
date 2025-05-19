@@ -345,14 +345,19 @@ function getAllSections($conn) {
                                 <select id="subject-select" name="subject_id" class="subject-select" required>
                                     <option value="">Choose a subject</option>
                                     <?php
+                                    // Join subject with program_subject to get year_offered and semester_offered
                                     $subjects = $conn->query("
-                                        SELECT s.subject_id, s.subject_name, s.subject_code 
+                                        SELECT s.subject_id, s.subject_name, s.subject_code, 
+                                               ps.year_offered, ps.semester_offered
                                         FROM subject s
+                                        LEFT JOIN program_subject ps ON s.subject_id = ps.subject_id
                                         ORDER BY s.subject_name
                                     ");
                                     while ($subject = $subjects->fetch_assoc()) {
+                                        $year = $subject['year_offered'] ? "Year: " . htmlspecialchars($subject['year_offered']) : "Year: N/A";
+                                        $sem = $subject['semester_offered'] ? "Sem: " . htmlspecialchars($subject['semester_offered']) : "Sem: N/A";
                                         echo '<option value="'.$subject['subject_id'].'">'.
-                                            htmlspecialchars($subject['subject_code'].' - '.$subject['subject_name']).
+                                            htmlspecialchars($subject['subject_code'].' - '.$subject['subject_name'])." ($year, $sem)".
                                             '</option>';
                                     }
                                     ?>
