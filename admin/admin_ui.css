@@ -211,7 +211,7 @@
             }
 
             .table-style th {
-                background-color: #27ac1f;
+                background-color: #12181e;
                 color: white;
                 padding: 10px 20px;
                 font-weight: bold;
@@ -464,7 +464,10 @@
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
     margin-top: 20px;
-    justify-items: start; /* Left alignment */
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 20px;
 }
 
 .instructor-card {
