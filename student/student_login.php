@@ -19,33 +19,39 @@
                                             ON prog.department_id = dept.department_id 
                                         INNER JOIN student_grades AS sg
                                             ON si.student_id = sg.student_id
-                                        WHERE ci.email=? AND ci.password=?");
-        $checkUserExist->bind_param("ss", $email, $password);
+                                        WHERE ci.email=?");
+        $checkUserExist->bind_param("s", $email);
         $checkUserExist->execute();
         $result = $checkUserExist->get_result();
         
 
-        if($result->num_rows != 0) {
+         if($result->num_rows != 0) {
             $user = $result->fetch_assoc();
-            $_SESSION['student_id'] = $user['student_id'];
-            $_SESSION['firstname'] = $user['firstname'];
-            $_SESSION['middle_name'] = $user['middle_name'];
-            $_SESSION['lastname'] = $user['lastname'];
-            $_SESSION['birthdate'] = $user['birthdate'];
-            $_SESSION['sex'] = $user['sex'];
-            $_SESSION['address'] = $user['address'];
-            $_SESSION['phone_number'] = $user['phone_number'];
-            $_SESSION['email'] = $email;
-            $_SESSION['year_level'] = $user['year_level'];
-            $_SESSION['program'] = $user['program_name'];
-            $_SESSION['sem'] = $user['current_semester'];
-            $_SESSION['scho_status'] = $user['scholastic_status'];
-            $_SESSION['school_year'] = $user['school_year'];
-            $_SESSION['department'] = $user['department_name'];
-            $_SESSION['program_id'] = $user['program_id'];
+            // Use password_verify to check hashed password
+            if (password_verify($password, $user['password'])) {
+                $_SESSION['student_id'] = $user['student_id'];
+                $_SESSION['firstname'] = $user['firstname'];
+                $_SESSION['middle_name'] = $user['middle_name'];
+                $_SESSION['lastname'] = $user['lastname'];
+                $_SESSION['birthdate'] = $user['birthdate'];
+                $_SESSION['sex'] = $user['sex'];
+                $_SESSION['address'] = $user['address'];
+                $_SESSION['phone_number'] = $user['phone_number'];
+                $_SESSION['email'] = $email;
+                $_SESSION['year_level'] = $user['year_level'];
+                $_SESSION['program'] = $user['program_name'];
+                $_SESSION['sem'] = $user['current_semester'];
+                $_SESSION['scho_status'] = $user['scholastic_status'];
+                $_SESSION['school_year'] = $user['school_year'];
+                $_SESSION['department'] = $user['department_name'];
+                $_SESSION['program_id'] = $user['program_id'];
 
-            header("Location: student_ui.php?success=1");
-            exit();
+                header("Location: student_ui.php?success=1");
+                exit();
+            } else {
+                header("Location: student_login.html?error=invalid_credentials");
+                exit();
+            }
         }
         else {
             header("Location: student_login.html?error=invalid_credentials");

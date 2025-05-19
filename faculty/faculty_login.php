@@ -64,14 +64,14 @@
                                         FROM instructor AS ins
                                         INNER JOIN contact_information AS ci
                                             ON ins.contact_id = ci.contact_id
-                                        WHERE ci.email=? AND ci.password=?");
+                                        WHERE ci.email=?");
         if (!$checkUserExist) {
             error_log("Prepare failed: " . $conn->error);
             header("Location: faculty_login.php?error=db_error");
             exit();
         }
 
-        $checkUserExist->bind_param("ss", $username, $password);
+        $checkUserExist->bind_param("s", $username);
         if (!$checkUserExist->execute()) {
             error_log("Execute failed: " . $checkUserExist->error);
             header("Location: faculty_login.php?error=db_error");
@@ -82,16 +82,23 @@
         
         if($result->num_rows != 0) {
             $user = $result->fetch_assoc();
-            error_log("Login successful for user: " . $username);
+            // Check hashed password
+            if (password_verify($password, $user['password'])) {
+                error_log("Login successful for user: " . $username);
 
-            $_SESSION['instructor_id'] = $user['instructor_id'];
-            $_SESSION['username'] = $user['instructor_name'];
+                $_SESSION['instructor_id'] = $user['instructor_id'];
+                $_SESSION['username'] = $user['instructor_name'];
 
-            header("Location: faculty_ui.php?success=1");
-            exit();
+                header("Location: faculty_ui.php?success=1");
+                exit();
+            } else {
+                error_log("Login failed for user: " . $username . " (invalid password)");
+                header("Location: faculty_login.php?error=invalid_credentials");
+                exit();
+            }
         }
         else {
-            error_log("Login failed for user: " . $username);
+            error_log("Login failed for user: " . $username . " (no such user)");
             header("Location: faculty_login.php?error=invalid_credentials");
             exit();
         }

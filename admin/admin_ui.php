@@ -1,7 +1,97 @@
 <?php 
     include '../config.php';
 ?>
+<?php
+function getAssignedSubjects($conn, $instructorId) {
+    $query = $conn->prepare("
+        SELECT s.subject_id, s.subject_name, s.subject_code, s.units, 
+               sec.section_id, sec.section_name, sis.sis_id
+        FROM subject_instructor_section sis
+        JOIN subject s ON sis.subject_id = s.subject_id
+        JOIN section sec ON sis.section_id = sec.section_id
+        WHERE sis.instructor_id = ?
+        ORDER BY s.subject_name
+    ");
+    $query->bind_param("i", $instructorId);
+    $query->execute();
+    $result = $query->get_result();
+    
+    if ($result->num_rows === 0) {
+        return '<div class="no-subjects-message">
+                <span class="material-icons">menu_book</span>
+                <p>No subjects assigned yet</p>
+                </div>';
+    }
+    
+    $html = '<table class="assigned-subjects-table">
+              <thead>
+                <tr>
+                  <th>Subject Code</th>
+                  <th>Subject Name</th>
+                  <th>Units</th>
+                  <th>Section</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>';
+    
+    while ($row = $result->fetch_assoc()) {
+        $html .= '<tr data-sis-id="'.$row['sis_id'].'">
+                    <td>'.htmlspecialchars($row['subject_code']).'</td>
+                    <td>'.htmlspecialchars($row['subject_name']).'</td>
+                    <td>'.$row['units'].'</td>
+                    <td>'.htmlspecialchars($row['section_name']).'</td>
+                    <td>
+                      <button class="btn-delete remove-subject-btn" 
+                              data-sis-id="'.$row['sis_id'].'">
+                        Remove
+                      </button>
+                    </td>
+                  </tr>';
+    }
+    
+    $html .= '</tbody></table>';
+    return $html;
+}
 
+function getAvailableSubjects($conn, $instructorId) {
+    $query = $conn->prepare("
+        SELECT s.subject_id, s.subject_name, s.subject_code
+        FROM subject s
+        WHERE s.subject_id NOT IN (
+            SELECT subject_id 
+            FROM subject_instructor_section 
+            WHERE instructor_id = ?
+        )
+        ORDER BY s.subject_name
+    ");
+    $query->bind_param("i", $instructorId);
+    $query->execute();
+    $result = $query->get_result();
+    
+    $options = '';
+    while ($row = $result->fetch_assoc()) {
+        $options .= '<option value="'.$row['subject_id'].'">
+                     '.htmlspecialchars($row['subject_code'].' - '.$row['subject_name']).'
+                     </option>';
+    }
+    
+    return $options;
+}
+
+function getAllSections($conn) {
+    $result = $conn->query("SELECT section_id, section_name FROM section ORDER BY section_name");
+    
+    $options = '';
+    while ($row = $result->fetch_assoc()) {
+        $options .= '<option value="'.$row['section_id'].'">
+                     '.htmlspecialchars($row['section_name']).'
+                     </option>';
+    }
+    
+    return $options;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -176,7 +266,124 @@
         <!-- Subject Management -->
         <div id="subject-management" class="display-page">
             <div class="title-container">
-                <h2 class = "title-style">Subject Management</h2>
+                <h2 class="title-style">Instructor Management</h2>
+            </div>
+            
+            <div class="instructor-cards-container">
+                <?php
+                // Get all instructors with their subjects and department
+                $instructorsQuery = $conn->query("
+                    SELECT 
+                        i.instructor_id, 
+                        i.instructor_name, 
+                        d.department_name,
+                        GROUP_CONCAT(DISTINCT s.subject_name ORDER BY s.subject_name SEPARATOR ',') as subjects,
+                        COUNT(DISTINCT sis.sis_id) as subject_count
+                    FROM instructor i
+                    JOIN department d ON i.department_id = d.department_id
+                    LEFT JOIN subject_instructor_section sis ON i.instructor_id = sis.instructor_id
+                    LEFT JOIN subject s ON sis.subject_id = s.subject_id
+                    GROUP BY i.instructor_id
+                    ORDER BY i.instructor_name
+                ");
+                
+                if ($instructorsQuery->num_rows > 0) {
+                    while ($instructor = $instructorsQuery->fetch_assoc()) {
+                        echo '<div class="instructor-card">
+                                <div class="instructor-header">
+                                    <h3>'.htmlspecialchars($instructor['instructor_name']).'</h3>
+                                    <span class="department-badge">'.$instructor['department_name'].'</span>
+                                </div>
+                                
+                                <div class="instructor-details">
+                                    <div class="detail-row">
+                                        <span class="detail-label">Subjects Assigned:</span>
+                                        <span class="detail-value">'.$instructor['subject_count'].'</span>
+                                    </div>
+                                    
+                                    <div class="detail-row">
+                                        <span class="detail-label">Subjects:</span>
+                                        <span class="detail-value">'.formatList($instructor['subjects'] ?: 'No subjects assigned').'</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="instructor-actions">
+                                    <button class="btn-manage manage-btn" data-instructor-id="'.$instructor['instructor_id'].'">
+                                        Manage Subjects
+                                    </button>
+                                </div>
+                            </div>';
+                    }
+                } else {
+                    echo '<div class="no-instructors-message">
+                            <span class="material-icons">co_present</span>
+                            <h3>No Instructors Found</h3>
+                            <p>There are currently no instructors in the database.</p>
+                        </div>';
+                }
+                
+                // Helper function to format comma-separated lists
+                function formatList($items) {
+                    if (strpos($items, ',') === false) return $items;
+                    return '<ul><li>'.str_replace(',', '</li><li>', $items).'</li></ul>';
+                }
+                ?>
+            </div>
+            
+            <!-- Assign Subjects Modal -->
+            <div id="assign-subjects-modal" class="modal" style="display:none;">
+                <div class="modal-content" style="width: 80%; max-width: 600px;">
+                    <span class="close" id="close-assign-modal">&times;</span>
+                    <h2>Manage Subjects for <span id="modal-instructor-name"></span></h2>
+                    
+                    <div class="assign-form-container">
+                        <form id="assign-subjects-form">
+                            <input type="hidden" id="modal-instructor-id" name="instructor_id">
+                            
+                            <div class="form-group">
+                                <label for="subject-select">Select Subject:</label>
+                                <select id="subject-select" name="subject_id" class="subject-select" required>
+                                    <option value="">Choose a subject</option>
+                                    <?php
+                                    $subjects = $conn->query("
+                                        SELECT s.subject_id, s.subject_name, s.subject_code 
+                                        FROM subject s
+                                        ORDER BY s.subject_name
+                                    ");
+                                    while ($subject = $subjects->fetch_assoc()) {
+                                        echo '<option value="'.$subject['subject_id'].'">'.
+                                            htmlspecialchars($subject['subject_code'].' - '.$subject['subject_name']).
+                                            '</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="section-select">Select Section:</label>
+                                <select id="section-select" name="section_id" class="section-select" required>
+                                    <option value="">Choose a section</option>
+                                    <?php
+                                    $sections = $conn->query("SELECT section_id, section_name FROM section ORDER BY section_name");
+                                    while ($section = $sections->fetch_assoc()) {
+                                        echo '<option value="'.$section['section_id'].'">'.
+                                            htmlspecialchars($section['section_name']).
+                                            '</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-manage">Assign Subject</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="current-assignments" id="current-assignments">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -488,7 +695,9 @@
             </div>
         </div>
         
-                        
+
+        
+    
     <script>
         // Toggle navigation bar
                 const toggleBtn = document.getElementById('toggle-nav');
@@ -1105,8 +1314,170 @@
                 document.getElementById('delete-instructor-modal').style.display = 'none';
             });
 
-        // subject management
+        // subject Management
+        // Instructor Cards Management System
+            document.addEventListener('DOMContentLoaded', function() {
+                // DOM Elements
+                const assignModal = document.getElementById('assign-subjects-modal');
+                const closeAssignModal = document.getElementById('close-assign-modal');
+                const assignForm = document.getElementById('assign-subjects-form');
+                const currentAssignments = document.getElementById('current-assignments');
+                const modalInstructorName = document.getElementById('modal-instructor-name');
+                const modalInstructorId = document.getElementById('modal-instructor-id');
 
+                // Event Listeners
+                document.addEventListener('click', function(e) {
+                    // Manage button click
+                    if (e.target.classList.contains('manage-btn')) {
+                        const card = e.target.closest('.instructor-card');
+                        const instructorId = e.target.dataset.instructorId;
+                        const instructorName = card.querySelector('h3').textContent;
+
+                        // Set modal content
+                        modalInstructorId.value = instructorId;
+                        modalInstructorName.textContent = instructorName;
+
+                        // Load current assignments
+                        loadCurrentAssignments(instructorId);
+
+                        // Show modal
+                        assignModal.style.display = 'block';
+                    }
+                    
+                    // Remove assignment button click
+                    if (e.target.classList.contains('remove-assignment-btn')) {
+                        const sisId = e.target.dataset.sisId;
+                        const instructorId = modalInstructorId.value;
+                        
+                        if (confirm('Are you sure you want to remove this assignment?')) {
+                            removeAssignment(sisId, instructorId);
+                        }
+                    }
+                });
+
+                // Close modal
+                closeAssignModal.addEventListener('click', function() {
+                    assignModal.style.display = 'none';
+                });
+
+                // Close modal when clicking outside
+                window.addEventListener('click', function(e) {
+                    if (e.target === assignModal) {
+                        assignModal.style.display = 'none';
+                    }
+                });
+
+                // Form submission
+                assignForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const instructorId = modalInstructorId.value;
+                    const subjectId = document.getElementById('subject-select').value;
+                    const sectionId = document.getElementById('section-select').value;
+                    const submitBtn = this.querySelector('button[type="submit"]');
+
+                    // Validate selection
+                    if (!subjectId || !sectionId) {
+                        alert('Please select both subject and section');
+                        return;
+                    }
+
+                    // Disable button during processing
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Assigning...';
+
+                    fetch('assign_subject.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `instructor_id=${instructorId}&subject_id=${subjectId}&section_id=${sectionId}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Refresh assignments list
+                            loadCurrentAssignments(instructorId);
+                            // Reset form
+                            assignForm.reset();
+                            // Show success
+                            alert('Subject assigned successfully');
+                        } else {
+                            throw new Error(data.message || 'Failed to assign subject');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error: ' + error.message);
+                    })
+                    .finally(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Assign Subject';
+                    });
+                });
+
+                // Load current assignments
+                function loadCurrentAssignments(instructorId) {
+                    currentAssignments.innerHTML = '<div class="loading-message">Loading current assignments...</div>';
+
+                    fetch(`get_instructor_assignments.php?instructor_id=${instructorId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.assignments.length > 0) {
+                                renderAssignments(data.assignments);
+                            } else {
+                                currentAssignments.innerHTML = '<div class="no-assignments">No current assignments</div>';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            currentAssignments.innerHTML = '<div class="error-message">Error loading assignments</div>';
+                        });
+                }
+
+                // Render assignments list
+                function renderAssignments(assignments) {
+                    let html = '<h3>Current Assignments</h3><ul class="assignments-list">';
+                    
+                    assignments.forEach(assignment => {
+                        html += `
+                            <li>
+                                <span class="assignment-subject">${assignment.subject_name}</span>
+                                <span class="assignment-section">${assignment.section_name}</span>
+                                <button class="btn-delete remove-assignment-btn" 
+                                        data-sis-id="${assignment.sis_id}">
+                                    Remove
+                                </button>
+                            </li>
+                        `;
+                    });
+                    
+                    html += '</ul>';
+                    currentAssignments.innerHTML = html;
+                }
+
+                // Remove assignment
+                function removeAssignment(sisId, instructorId) {
+                    fetch('remove_subject.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `sis_id=${sisId}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Refresh assignments list
+                            loadCurrentAssignments(instructorId);
+                            // Show success
+                            alert('Assignment removed successfully');
+                        } else {
+                            throw new Error(data.message || 'Failed to remove assignment');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error: ' + error.message);
+                    });
+                }
+            });
 
         // default page
         function showPage(id) {
