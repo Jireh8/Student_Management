@@ -83,6 +83,7 @@ $studentStmt = $conn->prepare("
         si.middle_name, 
         si.lastname, 
         si.year_level, 
+        si.current_semester,
         p.program_name, 
         p.program_id
     FROM student_information si
@@ -97,6 +98,9 @@ $studentResult = $studentStmt->get_result();
 $year_map = [1 => '1st', 2 => '2nd', 3 => '3rd', 4 => '4th'];
 
 while ($student = $studentResult->fetch_assoc()) {
+        if ($student['current_semester'] != $semester) {
+        continue;
+    }
     $year_offered = isset($year_map[$student['year_level']]) ? $year_map[$student['year_level']] : $student['year_level'];
 
     // Get the specific subject for this student

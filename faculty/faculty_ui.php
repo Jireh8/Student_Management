@@ -211,69 +211,67 @@
 
                     // Group sections by section_id
                     $sections = [];
-                    while($row = $result->fetch_assoc()) {
-                        if (!isset($sections[$row['section_id']])) {
-                            $sections[$row['section_id']] = [
-                                'section_name' => $row['section_name'],
-                                'program_name' => $row['program_name'],
-                                'subjects' => []
+                        while($row = $result->fetch_assoc()) {
+                            $section_year_key = $row['section_id'] . '_' . $row['year_offered'];
+                            if (!isset($sections[$section_year_key])) {
+                                $sections[$section_year_key] = [
+                                    'section_id' => $row['section_id'],
+                                    'section_name' => $row['section_name'],
+                                    'program_name' => $row['program_name'],
+                                    'year_offered' => $row['year_offered'],
+                                    'subjects' => []
+                                ];
+                            }
+                            $sections[$section_year_key]['subjects'][] = [
+                                'subject_id' => $row['subject_id'],
+                                'subject_name' => $row['subject_name'],
+                                'subject_code' => $row['subject_code'],
+                                'student_count' => $row['student_count'],
+                                'semester_offered' => $row['semester_offered'],
+                                'year_offered' => $row['year_offered']
                             ];
                         }
-                        $sections[$row['section_id']]['subjects'][] = [
-                            'subject_id' => $row['subject_id'],
-                            'subject_name' => $row['subject_name'],
-                            'subject_code' => $row['subject_code'],
-                            'student_count' => $row['student_count'],
-                            'semester_offered' => $row['semester_offered'],
-                            'year_offered' => $row['year_offered']
-                        ];
-                    }
 
-                    foreach ($sections as $section_id => $section) {
-                        echo '<div class="col-md-4 mb-4">
-                                <div class="card section-card">
-                                    <div class="card-body">
-                                        <h5 class="card-title mb-3">
-                                            <span>' . htmlspecialchars($section['subjects'][0]['year_offered']) . ' Year - </span>
-                                            <i></i>' . htmlspecialchars($section['section_name']) . '
-                                            
-                                        </h5>
-                                        
-                                        <div class="mb-2">
-                                            <span class="badge bg-primary">' . htmlspecialchars($section['program_name']) . '</span>
-                                        </div>';
+                        foreach ($sections as $section) {
+                            echo '<div class="col-md-4 mb-4">
+                                    <div class="card section-card">
+                                        <div class="card-body">
+                                            <h5 class="card-title mb-3">
+                                                <span>' . htmlspecialchars($section['year_offered']) . ' Year - </span>
+                                                <i></i>' . htmlspecialchars($section['section_name']) . '
+                                            </h5>
+                                            <div class="mb-2">
+                                                <span class="badge bg-primary">' . htmlspecialchars($section['program_name']) . '</span>
+                                            </div>';
 
-                        // Display subjects as clickable pills
-                        echo '<div class="mb-2">';
-                        foreach ($section['subjects'] as $subject) {
-                            echo '<span class="badge bg-secondary me-1 mb-1 subject-pill"
-                                onclick="showSectionStudents(' . $section_id . ', ' . $subject['subject_id'] . ', \'' . htmlspecialchars($subject['semester_offered']) . '\')"
-                                style="cursor: pointer; font-size: 0.95rem; padding: 0.4em 0.9em; border-radius: 1.5em; transition: background 0.2s, color 0.2s;">
-                                ' . htmlspecialchars($subject['subject_name']) . '
-                            </span>';
-                        }
-                        echo '</div>';
-                        // Add custom CSS for hover effect
-                        echo '<style>
-                            .subject-pill:hover {
-                                background: var(--secondary-color) !important;
-                                color: var(--white) !important;
-                                box-shadow: 0 2px 8px rgba(39,172,31,0.15);
+                            // Display subjects as clickable pills
+                            echo '<div class="mb-2">';
+                            foreach ($section['subjects'] as $subject) {
+                                echo '<span class="badge bg-secondary me-1 mb-1 subject-pill"
+                                    onclick="showSectionStudents(' . $section['section_id'] . ', ' . $subject['subject_id'] . ', \'' . htmlspecialchars($subject['semester_offered']) . '\')"
+                                    style="cursor: pointer; font-size: 0.95rem; padding: 0.4em 0.9em; border-radius: 1.5em; transition: background 0.2s, color 0.2s;">
+                                    ' . htmlspecialchars($subject['subject_name']) . '
+                                </span>';
                             }
-                        </style>';
-                        
-                        echo '<div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted small">
-                                    <i class="fas fa-user-graduate me-1"></i>' . $section['subjects'][0]['student_count'] . ' Students
-                                </span>
-                                <span class="text-muted small">
-                                    <i class="fas fa-calendar-alt me-1"></i>' . htmlspecialchars($section['subjects'][0]['semester_offered']) . ' Semester
-                                </span>
+                            echo '</div>';
+                            // Add custom CSS for hover effect
+                            echo '<style>
+                                .subject-pill:hover {
+                                    background: var(--secondary-color) !important;
+                                    color: var(--white) !important;
+                                    box-shadow: 0 2px 8px rgba(39,172,31,0.15);
+                                }
+                            </style>';
+
+                            echo '<div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted small">
+                                        <i class="fas fa-calendar-alt me-1"></i>' . htmlspecialchars($section['subjects'][0]['semester_offered']) . ' Semester
+                                    </span>
+                                </div>
+                                </div>
                             </div>
-                            </div>
-                        </div>
-                        </div>';
-                    }
+                            </div>';
+                        }
                     ?>
                 </div>
 

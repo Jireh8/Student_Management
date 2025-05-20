@@ -76,21 +76,27 @@
                 </thead>
                 <tbody>
                     <?php 
-                        $smt = $conn->prepare("SELECT subj.subject_code, subj.subject_name,
-                                                subj.units, ins.instructor_name, 
-                                                    sec.section_name, sc.day_of_week, 
-                                                    sc.start_time, sc.end_time, sc.room_number
-                                            FROM schedule AS sc
-                                            INNER JOIN subject_instructor_section AS sis
-                                                    USING(sis_id)
-                                            INNER JOIN subject AS subj
-                                                    ON sis.subject_id = subj.subject_id
-                                                INNER JOIN instructor AS ins
-                                                    ON sis.instructor_id = ins.instructor_id
-                                                INNER JOIN Section AS sec
-                                                    ON sis.section_id = sec.section_id;");
-                        $smt->execute();
-                        $result = $smt->get_result();
+                        $tableQuery = $conn->prepare("
+                            SELECT subj.subject_code, subj.subject_name, subj.units, ins.instructor_name, 
+                                sec.section_name, sc.day_of_week, sc.start_time, sc.end_time, sc.room_number
+                            FROM schedule AS sc
+                            INNER JOIN subject_instructor_section AS sis USING(sis_id)
+                            INNER JOIN subject AS subj ON sis.subject_id = subj.subject_id
+                            INNER JOIN instructor AS ins ON sis.instructor_id = ins.instructor_id
+                            INNER JOIN Section AS sec ON sis.section_id = sec.section_id
+                            INNER JOIN program_subject AS ps ON ps.subject_id = subj.subject_id
+                            WHERE ps.program_id = ?
+                            AND ps.year_offered = ?
+                            AND ps.semester_offered = ?
+                        ");
+                        $tableQuery->bind_param(
+                            "iis",
+                            $_SESSION['program_id'],
+                            $_SESSION['year_level'],
+                            $_SESSION['sem']
+                        );
+                        $tableQuery->execute();
+                        $result = $tableQuery->get_result();
 
                         while($row = $result->fetch_assoc()) {
                             echo "<tr>
@@ -136,11 +142,25 @@
             
             if ($gradeResults->num_rows > 0) {
                 while ($term = $gradeResults->fetch_assoc()) {
-                    $semester = htmlspecialchars($term['semester']);
-                    $schoolYear = htmlspecialchars($term['school_year']);
+                    // Convert year and semester to integers for comparison
+                    $termYear = (int)substr($term['school_year'], 0, 4); // e.g. "2024-2025" -> 2024
+                    $currentYear = (int)substr($_SESSION['school_year'], 0, 4);
+
+                    // Map semester to integer for comparison (assuming "1st" = 1, "2nd" = 2, etc.)
+                    $semMap = ['1st' => 1, '2nd' => 2, '3rd' => 3];
+                    $termSem = isset($semMap[$term['semester']]) ? $semMap[$term['semester']] : (int)$term['semester'];
+                    $currentSem = isset($semMap[$_SESSION['sem']]) ? $semMap[$_SESSION['sem']] : (int)$_SESSION['sem'];
+
+                    // Only show terms up to the current year and semester
+                    if (
+                        $termYear > $currentYear ||
+                        ($termYear == $currentYear && $termSem > $currentSem)
+                    ) {
+                        continue;
+                    }
             ?>
                     <div class="term-section">
-                        <h3><?= $semester ?> Semester, SY <?= $schoolYear ?></h3>
+                        <h3><?= $termSem ?> Semester, SY <?= $termYear ?></h3>
                         <table class="table-style tr:hover">
                             <thead>
                                 <tr>
