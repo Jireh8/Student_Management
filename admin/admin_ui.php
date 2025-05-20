@@ -260,7 +260,7 @@ function getAllSections($conn) {
         <!-- Subject Management -->
         <div id="subject-management" class="display-page">
             <div class="title-container">
-                <h2 class="title-style">Instructor Management</h2>
+                <h2 class="title-style">Subject Assigning Management</h2>
             </div>
             
             <div class="instructor-cards-container">
@@ -335,9 +335,11 @@ function getAllSections($conn) {
                             <input type="hidden" id="modal-instructor-id" name="instructor_id">
                             
                             <div class="form-group">
-                                <label for="subject-select">Select Subject:</label>
-                                <select id="subject-select" name="subject_id" class="subject-select" required>
-                                    <option value="">Choose a subject</option>
+                                <div>
+                                    <label for="subject-select">Select Subject:</label>
+                                    <select id="subject-select" name="subject_id" class="subject-select" required>
+                                </div>
+                                <option value="">Choose a subject</option>
                                     <?php
                                     // Join subject with program_subject to get year_offered and semester_offered
                                     $subjects = $conn->query("
