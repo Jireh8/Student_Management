@@ -43,7 +43,7 @@
                 <span>Forgot password? <a href="">Contact us</a></span>
             </div>
             <button type="submit">Login</button>
-            <p>Are you a student? <a href="../student/student_login.html">Login here</a></p>
+            <p>Are you a student? <a href="../student/student_login.php">Login here</a></p>
         </form>
     </div>
 </body>

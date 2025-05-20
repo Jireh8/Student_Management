@@ -130,48 +130,138 @@
             </section>
             
             <?php
-            // get every sem and sy
-            $gradeQuery = $conn->prepare("SELECT DISTINCT sg.semester, sg.school_year 
-                                        FROM student_grades sg
-                                        JOIN student_information si ON sg.student_id = si.student_id
-                                        WHERE sg.student_id = ? 
-                                        ORDER BY sg.school_year DESC, sg.semester DESC");
-            $gradeQuery->bind_param("i", $_SESSION['student_id']);
-            $gradeQuery->execute();
-            $gradeResults = $gradeQuery->get_result();
-            
-            if ($gradeResults->num_rows > 0) {
-                while ($term = $gradeResults->fetch_assoc()) {
-                    // Convert year and semester to integers for comparison
-                    $termYear = (int)substr($term['school_year'], 0, 4); // e.g. "2024-2025" -> 2024
-                    $currentYear = (int)substr($_SESSION['school_year'], 0, 4);
+            // Get all year levels and semesters up to the student's current year level and semester
+            $currentYearLevel = (int)$_SESSION['year_level'];
+            $currentSem = $_SESSION['sem'];
+            $semOrder = ['1st' => 1, '2nd' => 2];
 
-                    // Map semester to integer for comparison (assuming "1st" = 1, "2nd" = 2, etc.)
-                    $semMap = ['1st' => 1, '2nd' => 2, '3rd' => 3];
-                    $termSem = isset($semMap[$term['semester']]) ? $semMap[$term['semester']] : (int)$term['semester'];
-                    $currentSem = isset($semMap[$_SESSION['sem']]) ? $semMap[$_SESSION['sem']] : (int)$_SESSION['sem'];
-
-                    // Only show terms up to the current year and semester
-                    if (
-                        $termYear > $currentYear ||
-                        ($termYear == $currentYear && $termSem > $currentSem)
-                    ) {
-                        continue;
+            // Get all year/sem combinations up to current year/sem
+            $yearSemList = [];
+            for ($year = 1; $year <= $currentYearLevel; $year++) {
+                foreach ($semOrder as $semName => $semNum) {
+                    // If last year, only include up to current sem
+                    if ($year == $currentYearLevel && $semNum > $semOrder[$currentSem]) {
+                        break;
                     }
+                    $yearSemList[] = ['year_level' => $year, 'semester' => $semName];
+                }
+            }
+            $yearSemList = array_reverse($yearSemList);
+            if (!empty($yearSemList)) {
+                foreach ($yearSemList as $term) {
+                    $termYearLevel = $term['year_level'];
+                    $termSem = $term['semester'];
+
+                    // Get all subjects for this year_level and semester_offered in the student's program
+                    $subjStmt = $conn->prepare("
+                        SELECT subj.subject_id, subj.subject_code, subj.subject_name, subj.units
+                        FROM program_subject ps
+                        JOIN subject subj ON ps.subject_id = subj.subject_id
+                        WHERE ps.program_id = ?
+                        AND ps.year_offered = ?
+                        AND ps.semester_offered = ?
+                        ORDER BY subj.subject_code
+                    ");
+                    $subjStmt->bind_param("iis", $_SESSION['program_id'], $termYearLevel, $termSem);
+                    $subjStmt->execute();
+                    $subjResult = $subjStmt->get_result();
+
+                    if ($subjResult->num_rows > 0) {
+                        echo '<div class="term-section">';
+                        echo "<h3>{$termYearLevel} Year, {$termSem} Semester</h3>";
+                        echo '<table class="table-style tr:hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Subject Code</th>
+                                        <th>Description</th>
+                                        <th>Units</th>
+                                        <th>Final Grade</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>';
+                        $counter = 1;
+                        $totalUnits = 0;
+                        $weightedSum = 0;
+
+                        while ($subject = $subjResult->fetch_assoc()) {
+                            // Get grade for this subject and student
+                            $gradeStmt = $conn->prepare("
+                                SELECT final_grade, scholastic_status
+                                FROM student_grades
+                                WHERE student_id = ? AND subject_id = ?
+                            ");
+                            $gradeStmt->bind_param("ii", $_SESSION['student_id'], $subject['subject_id']);
+                            $gradeStmt->execute();
+                            $gradeResult = $gradeStmt->get_result();
+                            $grade = $gradeResult->fetch_assoc();
+
+                            $finalGrade = $grade && $grade['final_grade'] != 0 ? htmlspecialchars($grade['final_grade']) : '';
+                            $status = $grade ? htmlspecialchars($grade['scholastic_status']) : '';
+
+                            echo "<tr>
+                                    <td>" . $counter++ . "</td>
+                                    <td>" . htmlspecialchars($subject['subject_code']) . "</td>
+                                    <td>" . htmlspecialchars($subject['subject_name']) . "</td>
+                                    <td>" . htmlspecialchars($subject['units']) . "</td>
+                                    <td>" . $finalGrade . "</td>
+                                    <td>" . $status . "</td>
+                                </tr>";
+
+                            if ($grade && $grade['final_grade'] != 0) {
+                                $totalUnits += $subject['units'];
+                                $weightedSum += $subject['units'] * $grade['final_grade'];
+                            }
+                        }
+
+                        // calculate gwa and display
+                        if ($counter > 1 && $totalUnits > 0) {
+                            $gwa = $weightedSum / $totalUnits;
+                            echo "<tr class='gwa-row'>
+                                    <td colspan='3'><strong>Total Units: $totalUnits</strong></td>
+                                    <td colspan='3'><strong>GWA: " . number_format($gwa, 2) . "</strong></td>
+                                </tr>";
+
+                            // check if existing
+                            $checkGWA = $conn->prepare("
+                                SELECT gwa FROM academic_records 
+                                WHERE student_id = ? AND year_level = ? AND semester = ?
+                            ");
+                            $checkGWA->bind_param("iis", $_SESSION['student_id'], $termYearLevel, $termSem);
+                            $checkGWA->execute();
+                            $checkGWAResult = $checkGWA->get_result();
+
+                            if ($checkGWAResult->num_rows > 0) {
+                                // update if existing
+                                $updateStudentGWA = $conn->prepare("
+                                    UPDATE academic_records 
+                                    SET gwa = ? 
+                                    WHERE student_id = ? AND year_level = ? AND semester = ?
+                                ");
+                                $updateStudentGWA->bind_param("diis", $gwa, $_SESSION['student_id'], $termYearLevel, $termSem);
+                                $updateStudentGWA->execute();
+                            } else {
+                                // add if not existing
+                                $insertStudentGWA = $conn->prepare("
+                                    INSERT INTO academic_records (gwa, student_id, year_level, semester) 
+                                    VALUES (?, ?, ?, ?)
+                                ");
+                                $insertStudentGWA->bind_param("diis", $gwa, $_SESSION['student_id'], $termYearLevel, $termSem);
+                                $insertStudentGWA->execute();
+                            }
+                        } else {
+                            echo "<tr><td colspan='6'>No grades available for this term</td></tr>";
+                        }
+                        echo '</tbody></table></div>';
+                    }
+                }
+            } else {
+                echo "<p>No grade records found.</p>";
+            }
             ?>
                     <div class="term-section">
-                        <h3><?= $termSem ?> Semester, SY <?= $termYear ?></h3>
                         <table class="table-style tr:hover">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Subject Code</th>
-                                    <th>Description</th>
-                                    <th>Units</th>
-                                    <th>Final Grade</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
                             <tbody>
                                 <?php
                                 // get grades for term
@@ -242,19 +332,12 @@
                                         $insertStudentGWA->bind_param("diss", $gwa, $_SESSION['student_id'], $term['school_year'], $term['semester']);
                                         $insertStudentGWA->execute();
                                     }
-                                } else {
-                                    echo "<tr><td colspan='6'>No grades available for this term</td></tr>";
-                                }
+                                } 
                                 ?>
                             </tbody>
                         </table>
                     </div>
-            <?php
-                }
-            } else {
-                echo "<p>No grade records found.</p>";
-            }
-            ?>
+            
         </div>
 
         <!-- student program tab -->
