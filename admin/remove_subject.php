@@ -31,7 +31,12 @@ try {
         echo json_encode(['success' => false, 'message' => 'Assignment not found']);
         exit;
     }
-    
+
+    // First, delete related schedules
+    $deleteScheduleStmt = $conn->prepare("DELETE FROM schedule WHERE sis_id = ?");
+    $deleteScheduleStmt->bind_param("i", $sisId);
+    $deleteScheduleStmt->execute();
+
     // Now delete the assignment
     $deleteStmt = $conn->prepare("DELETE FROM subject_instructor_section WHERE sis_id = ?");
     $deleteStmt->bind_param("i", $sisId);

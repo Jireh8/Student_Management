@@ -28,8 +28,6 @@
         <nav id="navbar" class="collapsed">
             <button id="toggle-nav"><span class="material-icons">menu</span></button>
             <ul>
-                <li><a href="#student-homepage"><span class="material-icons">home</span>
-                    <span class="nav-label"> Home</span></a></li>
                 <li id="sched"><a href="#student-schedule"><span class="material-icons">calendar_today</span>
                     <span class="nav-label"> Schedule</span></a></li>
                 <li><a href="#student-grades"><span class="material-icons">grading</span>
@@ -49,11 +47,6 @@
                 </li>
             </ul>
         </nav>
-        
-        <!-- student homepage tab -->
-        <div id="student-homepage" class="student-page">
-            <h2 class = "title-style">Home Page</h2>
-        </div>
 
         <!-- student schedule tab -->
         <div id="student-schedule" class="student-page">

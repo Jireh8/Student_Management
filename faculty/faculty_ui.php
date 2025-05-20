@@ -182,51 +182,98 @@
                 <!-- Sections Grid -->
                 <div class="row" id="sections-grid">
                     <?php
-                        $stmt = $conn->prepare("SELECT sec.section_id, sec.section_name,
+                    $stmt = $conn->prepare("SELECT 
+                                            sec.section_id, 
+                                            sec.section_name,
                                             COALESCE(p.program_name, 'No Program') as program_name,
-                                            GROUP_CONCAT(DISTINCT sub.subject_name) as subject_names,
+                                            sub.subject_id,
+                                            sub.subject_name,
+                                            sub.subject_code,
                                             COUNT(DISTINCT si.student_id) as student_count,
-                                            GROUP_CONCAT(DISTINCT sg.semester) as semesters
-                                            FROM Section sec
-                                            INNER JOIN subject_instructor_section sis
-                                                ON sec.section_id = sis.section_id
-                                            INNER JOIN subject sub
-                                                ON sis.subject_id = sub.subject_id
-                                            LEFT JOIN student_information si
-                                                ON sec.section_id = si.section_id
-                                            LEFT JOIN program p
-                                                ON si.program_id = p.program_id
-                                            LEFT JOIN student_grades sg
-                                                ON si.student_id = sg.student_id
-                                            WHERE sis.instructor_id = ?
-                                            GROUP BY sec.section_id, sec.section_name");
-                        $stmt->bind_param("i", $_SESSION['instructor_id']);
-                        $stmt->execute();
-                        $result = $stmt->get_result();
+                                            ps.semester_offered,
+                                            ps.year_offered
+                                        FROM Section sec
+                                        INNER JOIN subject_instructor_section sis
+                                            ON sec.section_id = sis.section_id
+                                        INNER JOIN subject sub
+                                            ON sis.subject_id = sub.subject_id
+                                        INNER JOIN program_subject ps
+                                            ON sub.subject_id = ps.subject_id
+                                        LEFT JOIN student_information si
+                                            ON sec.section_id = si.section_id
+                                        LEFT JOIN program p
+                                            ON si.program_id = p.program_id
+                                        WHERE sis.instructor_id = ?
+                                        GROUP BY sec.section_id, sec.section_name, sub.subject_id, sub.subject_name, sub.subject_code, ps.semester_offered, ps.year_offered, p.program_name");
+                    $stmt->bind_param("i", $_SESSION['instructor_id']);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
 
-                        while($row = $result->fetch_assoc()) {
-                            echo '<div class="col-md-4 mb-4">
-                                    <div class="card section-card" onclick="showSectionStudents(' . $row['section_id'] . ', \'' . htmlspecialchars($row['semesters']) . '\')">
-                                        <div class="card-body">
-                                            <h5 class="card-title">
-                                                <i class="fas fa-users me-2"></i>' . htmlspecialchars($row['section_id'] . $row['section_name']) . '
-                                            </h5>
-                                            <p class="card-text mb-1">
-                                                <i class="fas fa-graduation-cap me-2"></i>' . htmlspecialchars($row['program_name']) . '
-                                            </p>
-                                            <p class="card-text mb-1">
-                                                <i class="fas fa-book me-2"></i>' . htmlspecialchars($row['subject_names']) . '
-                                            </p>
-                                            <p class="card-text mb-1">
-                                                <i class="fas fa-calendar-alt me-2"></i>Semester: ' . htmlspecialchars($row['semesters']) . '
-                                            </p>
-                                            <p class="card-text mb-1">
-                                                <i class="fas fa-user-graduate me-2"></i>' . $row['student_count'] . ' Students
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>';
+                    // Group sections by section_id
+                    $sections = [];
+                    while($row = $result->fetch_assoc()) {
+                        if (!isset($sections[$row['section_id']])) {
+                            $sections[$row['section_id']] = [
+                                'section_name' => $row['section_name'],
+                                'program_name' => $row['program_name'],
+                                'subjects' => []
+                            ];
                         }
+                        $sections[$row['section_id']]['subjects'][] = [
+                            'subject_id' => $row['subject_id'],
+                            'subject_name' => $row['subject_name'],
+                            'subject_code' => $row['subject_code'],
+                            'student_count' => $row['student_count'],
+                            'semester_offered' => $row['semester_offered'],
+                            'year_offered' => $row['year_offered']
+                        ];
+                    }
+
+                    foreach ($sections as $section_id => $section) {
+                        echo '<div class="col-md-4 mb-4">
+                                <div class="card section-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">
+                                            <span>' . htmlspecialchars($section['subjects'][0]['year_offered']) . ' Year - </span>
+                                            <i></i>' . htmlspecialchars($section['section_name']) . '
+                                            
+                                        </h5>
+                                        
+                                        <div class="mb-2">
+                                            <span class="badge bg-primary">' . htmlspecialchars($section['program_name']) . '</span>
+                                        </div>';
+
+                        // Display subjects as clickable pills
+                        echo '<div class="mb-2">';
+                        foreach ($section['subjects'] as $subject) {
+                            echo '<span class="badge bg-secondary me-1 mb-1 subject-pill"
+                                onclick="showSectionStudents(' . $section_id . ', ' . $subject['subject_id'] . ', \'' . htmlspecialchars($subject['semester_offered']) . '\')"
+                                style="cursor: pointer; font-size: 0.95rem; padding: 0.4em 0.9em; border-radius: 1.5em; transition: background 0.2s, color 0.2s;">
+                                ' . htmlspecialchars($subject['subject_name']) . '
+                            </span>';
+                        }
+                        echo '</div>';
+                        // Add custom CSS for hover effect
+                        echo '<style>
+                            .subject-pill:hover {
+                                background: var(--secondary-color) !important;
+                                color: var(--white) !important;
+                                box-shadow: 0 2px 8px rgba(39,172,31,0.15);
+                            }
+                        </style>';
+                        
+                        echo '<div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">
+                                    <i class="fas fa-user-graduate me-1"></i>' . $section['subjects'][0]['student_count'] . ' Students
+                                </span>
+                                <span class="text-muted small">
+                                    <i class="fas fa-calendar-alt me-1"></i>' . htmlspecialchars($section['subjects'][0]['semester_offered']) . ' Semester
+                                </span>
+                            </div>
+                            </div>
+                        </div>
+                        </div>';
+                    }
                     ?>
                 </div>
 
@@ -692,52 +739,25 @@
 
         // Function to get the current school year based on the month
         function getCurrentSchoolYear() {
-            const now = new Date();
-            let year = now.getFullYear();
-            let month = now.getMonth() + 1; // JS months: 0-11
-
-            // Assume 1st sem: June (6) - October (10), 2nd sem: November (11) - March (3)
-            // Summer: April (4) - May (5) [optional]
-            let startYear, endYear, semester;
-
-            if (month >= 6 && month <= 10) {
-            // 1st Semester
-            startYear = year;
-            endYear = year + 1;
-            semester = '1st';
-            } else if (month >= 11 || month <= 3) {
-            // 2nd Semester
-            if (month >= 11) {
-                startYear = year;
-                endYear = year + 1;
-            } else {
-                startYear = year - 1;
-                endYear = year;
-            }
-            semester = '2nd';
-            } else {
-            // Summer (April-May)
-            startYear = year - 1;
-            endYear = year;
-            semester = 'Summer';
-            }
-            // You can return both school year and semester if needed
-            // return { schoolYear: `${startYear}-${endYear}`, semester: semester };
-            return `${startYear}-${endYear}`;
+            return "2025-2026"; // Placeholder, replace with actual logic to get the current school year
         }
 
         let currentSectionId = null;
+        let currentSubjectId = null; 
         let currentSemester = null;
         let studentsData = [];
         let currentSort = { key: 'year_level', asc: true };
 
-        function showSectionStudents(sectionId, semester) {
+        function showSectionStudents(sectionId, subjectId, semester) {
             currentSectionId = sectionId;
+            currentSubjectId = subjectId;
             currentSemester = semester;
+            
             document.getElementById('sections-grid').style.display = 'none';
             document.getElementById('students-table').style.display = 'block';
             document.getElementById('currentSchoolYear').textContent = getCurrentSchoolYear();
-            document.getElementById('currentSemester').textContent = semester;
+            document.getElementById('currentSemester').textContent = currentSemester;
+            
             fetchAndDisplayStudents();
             document.getElementById('studentSearch').oninput = filterAndRenderStudents;
         }
@@ -746,7 +766,8 @@
             const studentsList = document.getElementById('students-list');
             studentsList.innerHTML = '<tr><td colspan="7" class="text-center">Loading students...</td></tr>';
             const schoolYear = getCurrentSchoolYear();
-            fetch(`get_section_students.php?section_id=${currentSectionId}&semester=${currentSemester}&school_year=${schoolYear}`)
+            
+            fetch(`get_section_students.php?section_id=${currentSectionId}&subject_id=${currentSubjectId}&semester=${currentSemester}&school_year=${schoolYear}`)
                 .then(response => {
                     if (!response.ok) {
                         return response.json().then(err => { throw new Error(err.error || 'Failed to fetch students'); });
@@ -756,14 +777,14 @@
                 .then(data => {
                     const sectionTitle = document.getElementById('section-title');
                     const sectionMeta = document.getElementById('section-meta');
-                    sectionTitle.innerHTML = `<i class=\"fas fa-users me-2\"></i>${data.section_name}`;
-                    sectionMeta.innerHTML = `${data.program_name} &bull; ${data.student_count} students`;
+                    sectionTitle.innerHTML = `<i class="fas fa-users me-2"></i>${data.section_name}`;
+                    sectionMeta.innerHTML = `${data.program_name} &bull; ${data.student_count} students &bull; Semester: ${currentSemester}`;
                     studentsData = data.students || [];
                     console.log('Fetched studentsData:', studentsData); // Debug log
                     filterAndRenderStudents();
                 })
                 .catch(error => {
-                    studentsList.innerHTML = `<tr><td colspan=\"7\" class=\"text-center text-danger\">${error.message}</td></tr>`;
+                    studentsList.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
                 });
         }
 
@@ -814,55 +835,33 @@
         function renderStudents(students) {
             const studentsList = document.getElementById('students-list');
             studentsList.innerHTML = '';
-            console.log('Students data:', students); // Debug log
 
             if (students.length === 0) {
-                studentsList.innerHTML = '<tr><td colspan="7" class="text-center">No students found in this section</td></tr>';
+                studentsList.innerHTML = '<tr><td colspan="7" class="text-center">No students found in this section/subject</td></tr>';
                 return;
             }
-            let anyRow = false;
-            students.forEach(student => {
-                if (!student.subjects || student.subjects.length === 0) {
-                    // Show student with no subjects
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${student.student_id}</td>
-                        <td>${student.student_name}</td>
-                        <td>${student.program_name}</td>
-                        <td>${student.year_level}</td>
-                        <td colspan="4" class="text-center text-muted">No subjects assigned for this year/semester</td>
-                    `;
-                    studentsList.appendChild(row);
-                    anyRow = true;
-                } else {
-                    student.subjects.forEach(subject => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${student.student_id}</td>
-                            <td>${student.student_name}</td>
-                            <td>${student.program_name}</td>
-                            <td>${student.year_level}</td>
-                            <td>${subject.subject_code} - ${subject.subject_name}</td>
-                            <td>${subject.final_grade !== null ? subject.final_grade : 0}</td>
-                            <td>${subject.scholastic_status || 'Regular'}</td>
-                            <td>
-                                <button class="btn btn-sm ${subject.final_grade == 0 ? 'btn-success' : 'btn-warning'}"
-                                    onclick="showUpdateGradeModal(${student.student_id}, '${student.student_name}', ${subject.subject_id}, '${subject.subject_name}', ${subject.final_grade})">
-                                    <i class="fas ${subject.final_grade == 0 ? 'fa-plus' : 'fa-edit'}"></i>
-                                    ${subject.final_grade == 0 ? 'Add' : 'Update'} Grade
-                                </button>
-                            </td>
-                        `;
-                        studentsList.appendChild(row);
-                        anyRow = true;
-                    });
-                }
-            });
-            if (!anyRow) {
-                studentsList.innerHTML = '<tr><td colspan="7" class="text-center">No students with subjects found in this section</td></tr>';
-            }
-        }
 
+            students.forEach(student => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${student.student_id}</td>
+                    <td>${student.student_name}</td>
+                    <td>${student.program_name}</td>
+                    <td>${student.year_level}</td>
+                    <td>${student.subject.subject_code} - ${student.subject.subject_name}</td>
+                    <td>${student.subject.final_grade !== null ? student.subject.final_grade : 0}</td>
+                    <td>${student.subject.scholastic_status || 'Regular'}</td>
+                    <td>
+                        <button class="btn btn-sm ${student.subject.final_grade == 0 ? 'btn-success' : 'btn-warning'}"
+                            onclick="showUpdateGradeModal(${student.student_id}, '${student.student_name}', ${student.subject.subject_id}, '${student.subject.subject_name}', ${student.subject.final_grade})">
+                            <i class="fas ${student.subject.final_grade == 0 ? 'fa-plus' : 'fa-edit'}"></i>
+                            ${student.subject.final_grade == 0 ? 'Add' : 'Update'} Grade
+                        </button>
+                    </td>
+                `;
+                studentsList.appendChild(row);
+            });
+        }
         function showSectionsGrid() {
             document.getElementById('sections-grid').style.display = 'flex';
             document.getElementById('students-table').style.display = 'none';

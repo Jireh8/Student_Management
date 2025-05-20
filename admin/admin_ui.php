@@ -114,8 +114,6 @@ function getAllSections($conn) {
         <nav id="navbar" class="collapsed"> 
             <button id="toggle-nav"><span class="material-icons">menu</span></button>
             <ul>
-                <li><a href="#homepage"><span class="material-icons">home</span>
-                    <span class="nav-label"> Home</span></a></li>
                 <li><a href="#school-calendar"><span class="material-icons">calendar_month</span>
                     <span class="nav-label"> School Calendar</span></a></li>
                 <li><a href="#student-management"><span class="material-icons">manage_accounts</span>
@@ -132,10 +130,6 @@ function getAllSections($conn) {
                 </li>
             </ul>
         </nav>
-        
-        <div id="homepage" class="display-page">
-            <h2 class = "title-style">Home Page</h2>
-        </div>
 
         <div id="school-calendar" class="display-page">
             <div class="title-container">
@@ -379,30 +373,30 @@ function getAllSections($conn) {
                                 </select>
                             </div>
                             <div class="form-group">
-    <label for="day_of_week">Day of Week:</label>
-    <select id="day_of_week" name="day_of_week" required>
-        <option value="">Select Day</option>
-        <option value="monday">Monday</option>
-        <option value="tuesday">Tuesday</option>
-        <option value="wednesday">Wednesday</option>
-        <option value="thursday">Thursday</option>
-        <option value="friday">Friday</option>
-        <option value="saturday">Saturday</option>
-        <option value="sunday">Sunday</option>
-    </select>
-</div>
-<div class="form-group">
-    <label for="start_time">Start Time:</label>
-    <input type="time" id="start_time" name="start_time" required>
-</div>
-<div class="form-group">
-    <label for="end_time">End Time:</label>
-    <input type="time" id="end_time" name="end_time" required>
-</div>
-<div class="form-group">
-    <label for="room_number">Room Number:</label>
-    <input type="number" id="room_number" name="room_number" required>
-</div>
+                                <label for="day_of_week">Day of Week:</label>
+                                <select id="day_of_week" name="day_of_week" required>
+                                    <option value="">Select Day</option>
+                                    <option value="monday">Monday</option>
+                                    <option value="tuesday">Tuesday</option>
+                                    <option value="wednesday">Wednesday</option>
+                                    <option value="thursday">Thursday</option>
+                                    <option value="friday">Friday</option>
+                                    <option value="saturday">Saturday</option>
+                                    <option value="sunday">Sunday</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="start_time">Start Time:</label>
+                                <input type="time" id="start_time" name="start_time" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="end_time">End Time:</label>
+                                <input type="time" id="end_time" name="end_time" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="room_number">Room Number:</label>
+                                <input type="number" id="room_number" name="room_number" required>
+                            </div>
                             <div class="form-actions">
                                 <button type="submit" class="btn-manage">Assign Subject</button>
                             </div>
@@ -1468,10 +1462,25 @@ function getAllSections($conn) {
                     let html = '<h3>Current Assignments</h3><ul class="assignments-list">';
                     
                     assignments.forEach(assignment => {
+                        // Format time (remove seconds)
+                        const start = assignment.start_time ? assignment.start_time.substring(0,5) : '';
+                        const end = assignment.end_time ? assignment.end_time.substring(0,5) : '';
+                        const day = assignment.day_of_week ? assignment.day_of_week.charAt(0).toUpperCase() + assignment.day_of_week.slice(1) : '';
+                        const room = assignment.room_number ? `Room: ${assignment.room_number}` : '';
+                        let schedule = '';
+                        if (day && start && end) {
+                            schedule = `<div class="assignment-schedule">
+                                <span>${day}</span> 
+                                <span>${start} - ${end}</span> 
+                                <span>${room}</span>
+                            </div>`;
+                        }
+
                         html += `
                             <li>
                                 <span class="assignment-subject">${assignment.subject_name}</span>
                                 <span class="assignment-section">${assignment.section_name}</span>
+                                ${schedule}
                                 <button class="btn-delete remove-assignment-btn" 
                                         data-sis-id="${assignment.sis_id}">
                                     Remove
