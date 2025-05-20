@@ -557,7 +557,6 @@
             <div class="tab-pane fade" id="calendar" role="tabpanel">
                 <div class="table-container">
                     <h4>Academic Calendar</h4>
-                    <p>Embed a calendar or show important academic dates/events.</p>
                     <!-- You could use a calendar plugin or static content -->
                     <!-- BEGIN: Calendar Inserted Here -->
                 <div class="mb-3">
@@ -573,7 +572,7 @@
                 <table class="table table-bordered text-center" id="calendarTable">
                     <thead class="table-dark">
                         <tr>
-                        <th>Sun</th><th>Mon</th><th>Tue</th><Wed><th>Thu</th><Fri><th>Sat</th>
+                        <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
                         </tr>
                     </thead>
                     <tbody>
