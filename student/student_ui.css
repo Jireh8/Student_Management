@@ -432,17 +432,3 @@ height: 100vh;
         border-bottom: 1px solid #c5c5c5;
     }
     
-        /* Calendar styles */
-        .calendar-day {
-            height: 80px;
-            vertical-align: top;
-        }
-        
-        .calendar-day-number {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .calendar-today {
-            background-color: rgba(134, 254, 120, 0.2);
-        }
