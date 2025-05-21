@@ -244,6 +244,39 @@ height: 100vh;
         flex-grow: 1;
         transition: margin-left 0.3s ease;
     }
+    #student-schedule header {
+        width: 90%;
+        display: flex;
+        justify-content: space-between; 
+        align-items: center;             
+        margin: 0 0 20px 0;
+        padding: 0 0 20px 0;
+        border-bottom: 2px solid #12181e;
+    }
+
+    #student-schedule .sched-head {
+        margin: 0;
+        padding: 0;
+        border-bottom: none;
+    }
+
+    #student-schedule button {
+        display: flex;
+        align-items: center;     
+        gap: 8px;                   
+        width: 160px;
+        padding: 6px 12px;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 8px;
+        border: none;
+        color: white;
+        background-color: #27ac1f;
+    }
+
+    #student-schedule button:hover {
+        background-color: #1e8818;
+    }
 /*Homepage*/
     #student-homepage {
         height: 60vh;

@@ -50,7 +50,13 @@
 
         <!-- student schedule tab -->
         <div id="student-schedule" class="student-page">
-            <h2 class = "title-style">Class Schedule</h2>
+            <header>
+                <h2 class = "title-style sched-head">Class Schedule</h2>
+                <form method="POST" action="generate_schedule.php">
+                    <button type="submit"><i class="material-icons">download</i>
+                    Download Copy</button>
+                </form>
+            </header>
             <section class="user-info">
                 <span>Welcome back, <strong><?= htmlspecialchars($_SESSION['firstname'])?></strong>!</span>
                 <span><strong>Student ID: <?= htmlspecialchars($_SESSION['student_id'])?></strong></span>
@@ -169,6 +175,12 @@
                     if ($subjResult->num_rows > 0) {
                         echo '<div class="term-section">';
                         echo "<h3>{$termYearLevel} Year, {$termSem} Semester</h3>";
+                        // Download grades form
+                        echo '<form method="POST" action="generate_grades.php">';
+                        echo '<input type="hidden" name="semester" value="' . htmlspecialchars($termSem) . '">';
+                        echo '<input type="hidden" name="school_year" value="' . htmlspecialchars($_SESSION['school_year']) . '">';
+                        echo '<button type="submit"><i class="material-icons">download</i> Download Copy</button>';
+                        echo '</form>';
                         echo '<table class="table-style tr:hover">
                                 <thead>
                                     <tr>
