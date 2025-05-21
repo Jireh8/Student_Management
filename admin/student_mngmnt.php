@@ -97,7 +97,7 @@ switch ($action) {
                             (student_id, subject_id, final_grade, school_year, semester, scholastic_status, grade_year_level) 
                             VALUES (?, ?, 0.00, ?, ?, 'Regular', ?)
                         ");
-                        $stmt4->bind_param("iiss", $student_id, $subject['subject_id'], $school_year, $semester, $year_offered);
+                        $stmt4->bind_param("iisss", $student_id, $subject['subject_id'], $school_year, $semester, $year_offered);
                         if (!$stmt4->execute()) {
                             throw new Exception("Failed to create grade record: " . $stmt4->error);
                         }
