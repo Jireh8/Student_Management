@@ -209,6 +209,11 @@
                 font-weight: 700;
                 margin: 0;
             }
+            .sub-title-style {
+                font-size: 15px;
+                font-weight: 500;
+                margin: 0;
+            }
             .title-container {
                 width: 90%;
                 display: flex;
@@ -228,7 +233,7 @@
             }
 
             .table-style th {
-                background-color: #12181e;
+                background-color: #404244;
                 color: white;
                 padding: 5px 10px;
                 font-weight: bold;
@@ -245,10 +250,7 @@
 
             .table-style td {
                 padding: 5px;
-            }
-
-            .table-style tr:nth-child(even) {
-                background-color: #f9f9f9;
+                border: 1px solid #ddd;
             }
 
             .table-style tr:hover {

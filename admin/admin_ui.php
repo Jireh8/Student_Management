@@ -140,6 +140,7 @@ function getAllSections($conn) {
         <div id="student-management" class="display-page">
                 <div class="title-container">
                     <h2 class="title-style">Student Management</h2>
+                    
                     <button id="add-student" class="btn-style">+ Add Student</button>
                 </div>
             <table class="table-style tr:hover">

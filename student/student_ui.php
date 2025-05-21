@@ -53,7 +53,7 @@
             <header>
                 <h2 class = "title-style sched-head">Class Schedule</h2>
                 <form method="POST" action="generate_schedule.php">
-                    <button type="submit"><i class="material-icons">download</i>
+                    <button type="submit" class="download-button"><i class="material-icons">download</i>
                     Download Copy</button>
                 </form>
             </header>
@@ -189,14 +189,16 @@
 
                     if ($subjResult->num_rows > 0) {
                         echo '<div class="term-section">';
-                        echo "<h3>{$termYearLevel} Year, {$termSem} Semester</h3>";
+                        echo '<div style="display: flex; justify-content: space-between; align-items: center;">';
+                        echo "<h3 style='margin: 0;'>{$termYearLevel} Year, {$termSem} Semester</h3>";
                         // Download grades form
-                        echo '<form method="POST" action="generate_grades.php">';
+                        echo '<form method="POST" action="generate_grades.php" style="margin: 0;">';
                         echo '<input type="hidden" name="semester" value="' . htmlspecialchars($termSem) . '">';
                         echo '<input type="hidden" name="year_level" value="' . htmlspecialchars($termYearLevel) . '">';
                         echo '<input type="hidden" name="school_year" value="' . htmlspecialchars($_SESSION['school_year']) . '">';
-                        echo '<button type="submit"><i class="material-icons">download</i> Download Copy</button>';
+                        echo '<button type="submit" class="download-button"><i class="material-icons">download</i> Download Copy</button>';
                         echo '</form>';
+                        echo '</div>';
                         echo '<table class="table-style tr:hover">
                                 <thead>
                                     <tr>

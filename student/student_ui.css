@@ -90,7 +90,9 @@ height: 100vh;
     width: 100%;
 }
 
-.material-icons { font-size: 25px;}
+.material-icons { 
+    font-size: 10px;
+}
 
 .nav-label {
     margin-left: 10px;
@@ -112,7 +114,19 @@ height: 100vh;
     font-size: 24px;
     cursor: pointer;
 }
-
+.download-button {
+    background-color: #8cb08a;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border-width: 0;
+}
+.download-button:hover {
+    background-color: #517255;
+}
 
 /*Subpages*/
 .student-page {
@@ -167,6 +181,8 @@ height: 100vh;
         display: flex;
         justify-content: space-between;
         margin-bottom: 20px;
+        padding: 0 0 20px 0;
+        border-bottom: 2px solid #12181e;
     }
 /* Shared Table Style */
     .table-style {
@@ -195,7 +211,7 @@ height: 100vh;
 
     .table-style td {
         background-color: white;
-        padding: 10px;
+        padding: 5px;
         border: 1px solid #ddd;
     }
 
@@ -214,7 +230,7 @@ height: 100vh;
         align-items: center;
         /*container*/
         margin-left: 60px;
-        padding: 20px;
+        padding: 5px;
         flex-grow: 1;
         transition: margin-left 0.3s ease;
     }   
@@ -416,3 +432,17 @@ height: 100vh;
         border-bottom: 1px solid #c5c5c5;
     }
     
+        /* Calendar styles */
+        .calendar-day {
+            height: 80px;
+            vertical-align: top;
+        }
+        
+        .calendar-day-number {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .calendar-today {
+            background-color: rgba(134, 254, 120, 0.2);
+        }
