@@ -137,26 +137,41 @@
             
             <?php
             // Get all year levels and semesters up to the student's current year level and semester
-            $currentYearLevel = (int)$_SESSION['year_level'];
+            $currentYearLevel = $_SESSION['year_level']; // Now assumed to be a string like '1st', '2nd', etc.
             $currentSem = $_SESSION['sem'];
-            $semOrder = ['1st' => 1, '2nd' => 2];
 
-            // Get all year/sem combinations up to current year/sem
+            // Define the order of semesters and years
+            $semOrder = ['1st' => 1, '2nd' => 2];
+            $yearOrder = ['1st' => 1, '2nd' => 2, '3rd' => 3, '4th' => 4];
+
+            // Generate year/semester combinations up to the current one
             $yearSemList = [];
-            for ($year = 1; $year <= $currentYearLevel; $year++) {
-                foreach ($semOrder as $semName => $semNum) {
-                    // If last year, only include up to current sem
-                    if ($year == $currentYearLevel && $semNum > $semOrder[$currentSem]) {
+            foreach ($yearOrder as $yearStr => $yearNum) {
+                if ($yearNum > $yearOrder[$currentYearLevel]) break;
+
+                foreach ($semOrder as $semStr => $semNum) {
+                    // Skip semesters after current if in current year
+                    if (
+                        $yearStr === $currentYearLevel &&
+                        $semNum > $semOrder[$currentSem]
+                    ) {
                         break;
                     }
-                    $yearSemList[] = ['year_level' => $year, 'semester' => $semName];
+
+                    $yearSemList[] = [
+                        'year_level' => $yearStr,
+                        'semester' => $semStr
+                    ];
                 }
             }
+
             $yearSemList = array_reverse($yearSemList);
+
             if (!empty($yearSemList)) {
                 foreach ($yearSemList as $term) {
                     $termYearLevel = $term['year_level'];
                     $termSem = $term['semester'];
+                    //echo "<script>console.log('Semester: " . $termSem . ", Year Level: " . $termYearLevel . "');</script>";
 
                     // Get all subjects for this year_level and semester_offered in the student's program
                     $subjStmt = $conn->prepare("
@@ -178,6 +193,7 @@
                         // Download grades form
                         echo '<form method="POST" action="generate_grades.php">';
                         echo '<input type="hidden" name="semester" value="' . htmlspecialchars($termSem) . '">';
+                        echo '<input type="hidden" name="year_level" value="' . htmlspecialchars($termYearLevel) . '">';
                         echo '<input type="hidden" name="school_year" value="' . htmlspecialchars($_SESSION['school_year']) . '">';
                         echo '<button type="submit"><i class="material-icons">download</i> Download Copy</button>';
                         echo '</form>';
@@ -277,15 +293,23 @@
                             <tbody>
                                 <?php
                                 // get grades for term
-                                $termQuery = $conn->prepare("SELECT s.subject_code, s.subject_name, 
-                                                            s.units, sg.final_grade, sg.scholastic_status
-                                                        FROM student_grades sg
-                                                        JOIN subject s ON sg.subject_id = s.subject_id
-                                                        WHERE sg.student_id = ? 
-                                                        AND sg.semester = ? 
-                                                        AND sg.school_year = ?
-                                                        ORDER BY s.subject_code");
-                                $termQuery->bind_param("iss", $_SESSION['student_id'], $term['semester'], $term['school_year']);
+                                $termQuery = $conn->prepare("
+                                    SELECT s.subject_code, s.subject_name, s.units, sg.final_grade, sg.scholastic_status
+                                    FROM student_grades sg
+                                    JOIN subject s ON sg.subject_id = s.subject_id
+                                    WHERE sg.student_id = ?
+                                    AND sg.semester = ?
+                                    AND sg.school_year = ?
+                                    AND sg.subject_id IN (
+                                        SELECT subject_id FROM program_subject 
+                                        WHERE program_id = ? 
+                                            AND year_offered = ? 
+                                            AND semester_offered = ?
+                                    )
+                                    ORDER BY s.subject_code
+                                ");
+
+                                $termQuery->bind_param("isssis", $studentId, $semester, $schoolYear, $programId, $yearLevel, $semester);
                                 $termQuery->execute();
                                 $termResults = $termQuery->get_result();
                                 

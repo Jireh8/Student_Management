@@ -489,10 +489,10 @@ function getAllSections($conn) {
                         <label for="year_level">Year Level*</label>
                         <select id="year_level" name="year_level" required>
                             <option value="">Select Year</option>
-                            <option value="1">1st Year</option>
-                            <option value="2">2nd Year</option>
-                            <option value="3">3rd Year</option>
-                            <option value="4">4th Year</option>
+                            <option value="1st">1st Year</option>
+                            <option value="2nd">2nd Year</option>
+                            <option value="3rd">3rd Year</option>
+                            <option value="4th">4th Year</option>
                         </select>
                     </div>
                     <div class="form-style" style="grid-row:6;grid-column:2">
@@ -587,10 +587,10 @@ function getAllSections($conn) {
                         <label for="edit-year_level">Year Level*</label>
                         <select id="edit-year_level" name="year_level" required>
                             <option value="">Select Year</option>
-                            <option value="1">1st Year</option>
-                            <option value="2">2nd Year</option>
-                            <option value="3">3rd Year</option>
-                            <option value="4">4th Year</option>
+                            <option value="1st">1st Year</option>
+                            <option value="2nd">2nd Year</option>
+                            <option value="3rd">3rd Year</option>
+                            <option value="4th">4th Year</option>
                         </select>
                     </div>
                     <div class="form-style" style="grid-row:6;grid-column:2">
@@ -993,10 +993,10 @@ function getAllSections($conn) {
                             <label for="edit-year_level">Year Level*</label>
                             <select id="edit-year_level" name="year_level" required>
                                 <option value="">Select Year</option>
-                                <option value="1" ${studentData.year_level == 1 ? 'selected' : ''}>1st Year</option>
-                                <option value="2" ${studentData.year_level == 2 ? 'selected' : ''}>2nd Year</option>
-                                <option value="3" ${studentData.year_level == 3 ? 'selected' : ''}>3rd Year</option>
-                                <option value="4" ${studentData.year_level == 4 ? 'selected' : ''}>4th Year</option>
+                                <option value="1st" ${studentData.year_level == '1st' ? 'selected' : ''}>1st Year</option>
+                                <option value="2nd" ${studentData.year_level == '2nd' ? 'selected' : ''}>2nd Year</option>
+                                <option value="3rd" ${studentData.year_level == '3rd' ? 'selected' : ''}>3rd Year</option>
+                                <option value="4th" ${studentData.year_level == '4th' ? 'selected' : ''}>4th Year</option>
                             </select>
                         </div>
                         

@@ -46,10 +46,12 @@
                 $_SESSION['year_level'] = $user['year_level'];
                 $_SESSION['program'] = $user['program_name'];
                 $_SESSION['sem'] = $user['current_semester'];
+                $_SESSION['semester'] = $user['semester'];
                 $_SESSION['scho_status'] = $user['scholastic_status'];
                 $_SESSION['school_year'] = $user['school_year'];
                 $_SESSION['department'] = $user['department_name'];
                 $_SESSION['program_id'] = $user['program_id'];
+                $_SESSION['grade_year'] = $user['grade_year_level'];
 
                 header("Location: student_ui.php?success=1");
                 exit();

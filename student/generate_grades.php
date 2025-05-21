@@ -10,20 +10,23 @@ if (!isset($_SESSION['student_id'])) {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['semester']) && isset($_POST['school_year'])) {
     $semester = $_POST['semester'];
-    $schoolYear = $_POST['year_level'];
+    $yearLevel = $_POST['year_level'];
     $studentId = $_SESSION['student_id'];
     $studentName = $_SESSION['firstname'] . ' ' . $_SESSION['lastname'];
 
+    //echo "<script>console.log('Semester: " . $semester . ", Year Level: " . $yearLevel . "');</script>";
     // Query the grades
-    $termQuery = $conn->prepare("SELECT s.subject_code, s.subject_name, 
-                                        s.units, sg.final_grade, sg.scholastic_status
-                                 FROM student_grades sg
-                                 JOIN subject s ON sg.subject_id = s.subject_id
-                                 WHERE sg.student_id = ? 
-                                 AND sg.semester = ? 
-                                 AND sg.school_year = ?
-                                 ORDER BY s.subject_code");
-    $termQuery->bind_param("iss", $studentId, $semester, $schoolYear);
+    $termQuery = $conn->prepare("
+        SELECT s.subject_code, s.subject_name, s.units, sg.final_grade, sg.scholastic_status
+        FROM student_grades sg
+        JOIN subject s ON sg.subject_id = s.subject_id
+        WHERE sg.student_id = ?
+        AND sg.semester = ?
+        AND sg.grade_year_level = ?
+        ORDER BY s.subject_code
+    ");
+    $termQuery->bind_param("iss", $studentId, $semester, $yearLevel);
+
     $termQuery->execute();
     $termResults = $termQuery->get_result();
 
@@ -105,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['semester']) && isset($
     $pdf->SetFont('helvetica', '', 10);
     $pdf->Cell(25, 7, 'Student ID:', 0, 0, 'R');
     $pdf->SetFont('helvetica', 'B', 10);
-    $pdf->Cell(40, 7, $_SESSION['student_id'], 0, 1, 'R');
+    $pdf->Cell(40, 7, $_SESSION['student_id'], 0, 1, 'L');
     
     $pdf->SetX(20);
     $pdf->SetFont('helvetica', '', 10);
@@ -116,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['semester']) && isset($
     $pdf->SetFont('helvetica', '', 10);
     $pdf->Cell(25, 7, 'Academic Year:', 0, 0, 'R');
     $pdf->SetFont('helvetica', 'B', 10);
-    $pdf->Cell(40, 7, $schoolYear, 0, 1, 'R');
+    $pdf->Cell(40, 7, $yearLevel, 0, 1, 'L'); //CHECK DIS AGAIN
     
     // Additional student info if available
     $pdf->SetX(20);
@@ -128,14 +131,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['semester']) && isset($
     $pdf->SetFont('helvetica', '', 10);
     $pdf->Cell(25, 7, 'Year Level:', 0, 0, 'R');
     $pdf->SetFont('helvetica', 'B', 10);
-    $pdf->Cell(40, 7, isset($_SESSION['year_level']) ? $_SESSION['year_level'] : 'Not specified', 0, 1, 'R');
+    $pdf->Cell(40, 7, isset($_SESSION['year_level']) ? $_SESSION['year_level'] : 'Not specified', 0, 1, 'L');
     
     // Add spacing - advance past the info box
     $pdf->Ln(10);
     
     // Grades table with better styling
     $pdf->SetFont('helvetica', 'B', 12);
-    $pdf->Cell(0, 10, 'Academic Record - ' . $semester . ' Semester, SY ' . $schoolYear, 0, 1, 'L');
+    $pdf->Cell(0, 10, $yearLevel .' Year, ' . $semester . " Semester", 0, 1, 'L'); //CHECK DIS AGAIN
     
     // Table header colors
     $pdf->SetFillColor(0, 63, 127); // Dark blue
