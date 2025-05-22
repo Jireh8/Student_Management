@@ -445,16 +445,16 @@
 
         <!-- student calendar tab -->
         <div id="student-calendar" class="student-page">
-            <h2 class="title-style">Academic Calendar</h2>
-            
-                <div class="mb-3">
+            <h2>Academic Calendar</h2>
+            <div class="table-container">
+                <div class="table-style">
                     <label for="calendarYear">Year:</label>
                     <select id="calendarYear" class="form-select" style="width: auto; display: inline-block;"></select>
                     <label for="calendarMonth" class="ms-3">Month:</label>
                     <select id="calendarMonth" class="form-select" style="width: auto; display: inline-block;"></select>
                 </div>
                 <table class="table-style" id="calendarTable">
-                    <thead class="table-dark">
+                    <thead>
                         <tr>
                             <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
                         </tr>
@@ -463,7 +463,7 @@
                         <!-- Populated by JavaScript -->
                     </tbody>
                 </table>
-            
+            </div>
         </div>
 
         <!-- student profile tab -->
