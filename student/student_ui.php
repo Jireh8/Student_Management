@@ -19,8 +19,8 @@
 <body>
 
     <header id="univ-header">
-        <!--<img src="university-logo.png" alt="University Logo" id="univ-logo"><-->
-        <span id="univ-logo" class="material-icons">school</span>
+        <img src="../lemonsquare-logo.png" alt="University Logo" id="univ-logo" style="height:60px; width:auto;">
+        <span id="univ-logo"></span>
         <h1 id="univ-name">Xydle University</h1>
     </header>
 
@@ -444,7 +444,27 @@
         </div>
 
         <!-- student calendar tab -->
-        <div id="student-calendar" class="student-page"></div>
+        <div id="student-calendar" class="student-page">
+            <h2 class="title-style">Academic Calendar</h2>
+            
+                <div class="mb-3">
+                    <label for="calendarYear">Year:</label>
+                    <select id="calendarYear" class="form-select" style="width: auto; display: inline-block;"></select>
+                    <label for="calendarMonth" class="ms-3">Month:</label>
+                    <select id="calendarMonth" class="form-select" style="width: auto; display: inline-block;"></select>
+                </div>
+                <table class="table-style" id="calendarTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            
+        </div>
 
         <!-- student profile tab -->
         <div id="student-profile" class="student-page">
@@ -553,7 +573,58 @@
                 showPage(targetId);
             });
         });
-
+        // calendar
+         const monthSelect = document.getElementById('calendarMonth');
+        const yearSelect = document.getElementById('calendarYear');
+        const calendarBody = document.querySelector('#calendarTable tbody');
+        const months = ["January", "February", "March", "April", "May", "June", 
+                        "July", "August", "September", "October", "November", "December"];
+        // Populate years from current to 2050
+        const currentYear = new Date().getFullYear();
+        for (let y = currentYear; y <= 2050; y++) {
+            let option = document.createElement('option');
+            option.value = y;
+            option.text = y;
+            yearSelect.appendChild(option);
+        }
+        // Populate months
+        months.forEach((month, index) => {
+            let option = document.createElement('option');
+            option.value = index;
+            option.text = month;
+            monthSelect.appendChild(option);
+        });
+        // Draw calendar
+        function generateCalendar(year, month) {
+            calendarBody.innerHTML = '';
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            let row = document.createElement('tr');
+            for (let i = 0; i < firstDay; i++) {
+                row.appendChild(document.createElement('td'));
+            }
+            for (let day = 1; day <= daysInMonth; day++) {
+                let cell = document.createElement('td');
+                cell.textContent = day;
+                row.appendChild(cell);
+                if ((firstDay + day) % 7 === 0 || day === daysInMonth) {
+                    calendarBody.appendChild(row);
+                    row = document.createElement('tr');
+                }
+            }
+        }
+        // Initial render
+        const now = new Date();
+        yearSelect.value = now.getFullYear();
+        monthSelect.value = now.getMonth();
+        generateCalendar(now.getFullYear(), now.getMonth());
+        // Change handlers
+        yearSelect.addEventListener('change', () => {
+            generateCalendar(+yearSelect.value, +monthSelect.value);
+        });
+        monthSelect.addEventListener('change', () => {
+            generateCalendar(+yearSelect.value, +monthSelect.value);
+        });
         // default page
         showPage('student-schedule');
     </script>

@@ -115,7 +115,7 @@ height: 100vh;
     cursor: pointer;
 }
 .download-button {
-    background-color: #8cb08a;
+    background-color: #94b2cc;
     color: white;
     font-size: 14px;
     font-weight: 500;
@@ -123,9 +123,10 @@ height: 100vh;
     cursor: pointer;
     transition: background-color 0.3s ease;
     border-width: 0;
+    
 }
 .download-button:hover {
-    background-color: #517255;
+    background-color: #3a4d5d;
 }
 
 /*Subpages*/
@@ -184,6 +185,13 @@ height: 100vh;
         padding: 0 0 20px 0;
         border-bottom: 2px solid #12181e;
     }
+    .table-container {
+            background: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
 /* Shared Table Style */
     .table-style {
         width: 90%;
@@ -279,7 +287,7 @@ height: 100vh;
     #student-schedule button {
         display: flex;
         align-items: center;     
-        gap: 8px;                   
+        gap: 8px;                       
         width: 160px;
         padding: 6px 12px;
         font-size: 14px;
@@ -287,11 +295,11 @@ height: 100vh;
         border-radius: 8px;
         border: none;
         color: white;
-        background-color: #27ac1f;
+        background-color: #2c8cc7;
     }
 
     #student-schedule button:hover {
-        background-color: #1e8818;
+        background-color: #19496c;
     }
 /*Homepage*/
     #student-homepage {

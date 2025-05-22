@@ -220,7 +220,7 @@
         }
         #profile-upload { display: none; }
         .upload-btn {
-            background-color: #27ac1f;
+            background-color: #2c8cc7;
             color: white;
             padding: 8px 16px;
             font-size: 14px;
@@ -230,7 +230,7 @@
             transition: background-color 0.3s ease;
             margin-top: 10px;
         }
-        .upload-btn:hover { background-color: #1c8017; }
+        .upload-btn:hover { background-color: #19496c; }
         #info-table table { width: 100%; }
         .firstcol { width: 200px; font-weight: bold;}
         .secondcol { width: 250px; color: #12181eb0; }
